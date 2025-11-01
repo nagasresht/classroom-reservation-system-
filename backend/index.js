@@ -2,7 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-dotenv.config();
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+console.log('Environment loaded:');
+console.log('MONGO_URI:', process.env.MONGO_URI ? 'Found' : 'Not found');
 
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookingRoutes');
@@ -21,10 +25,12 @@ app.use('/api', bookingRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/classroom', classroomMapRoutes);
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+if (!process.env.MONGO_URI) {
+  console.error('❌ MONGO_URI is not defined in .env file');
+  process.exit(1);
+}
+
+mongoose.connect(process.env.MONGO_URI)
 .then(() => {
   console.log('✅ MongoDB connected');
   app.listen(5000, () => console.log('🚀 Server at http://localhost:5000'));
