@@ -8,7 +8,8 @@ export default function Register() {
     email: '',
     password: '',
     department: '',
-    staffNumber: ''
+    staffNumber: '',
+    phone: ''
   });
   const [error, setError] = useState('');
 
@@ -41,17 +42,136 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4 text-center">Register</h2>
-        {error && <p className="text-red-500 mb-3 text-center">{error}</p>}
-        <input name="name" type="text" placeholder="Full Name" value={form.name} onChange={handleChange} className="w-full mb-3 border px-3 py-2 rounded" required />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} className="w-full mb-3 border px-3 py-2 rounded" required />
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} className="w-full mb-3 border px-3 py-2 rounded" required />
-        <input name="department" type="text" placeholder="Department" value={form.department} onChange={handleChange} className="w-full mb-3 border px-3 py-2 rounded" required />
-        <input name="staffNumber" type="text" placeholder="Staff Number" value={form.staffNumber} onChange={handleChange} className="w-full mb-4 border px-3 py-2 rounded" required />
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Register</button>
-      </form>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#111827] via-[#1e293b] to-[#111827] py-8">
+      <div className="w-full max-w-md px-6">
+        {/* Logo/Brand Section */}
+        <div className="text-center mb-6">
+          <div className="inline-block">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Classroom<span className="text-[#3B82F6]">Hub</span>
+            </h1>
+            <div className="h-1 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full"></div>
+          </div>
+        </div>
+
+        {/* Register Form Card */}
+        <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-lg border border-[#374151] p-8 rounded-2xl shadow-2xl">
+          <h2 className="text-3xl font-bold mb-2 text-white">Create Account</h2>
+          <p className="text-[#9CA3AF] mb-6 text-sm">Join our classroom booking platform</p>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg">
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            </div>
+          )}
+          
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[#9CA3AF] text-sm font-medium mb-2">Full Name</label>
+              <input 
+                name="name" 
+                type="text" 
+                placeholder="John Doe" 
+                value={form.name} 
+                onChange={handleChange} 
+                className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition placeholder-[#6B7280]" 
+                required 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#9CA3AF] text-sm font-medium mb-2">Email Address</label>
+              <input 
+                name="email" 
+                type="email" 
+                placeholder="you@example.com" 
+                value={form.email} 
+                onChange={handleChange} 
+                className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition placeholder-[#6B7280]" 
+                required 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#9CA3AF] text-sm font-medium mb-2">Password</label>
+              <input 
+                name="password" 
+                type="password" 
+                placeholder="Create a strong password" 
+                value={form.password} 
+                onChange={handleChange} 
+                className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition placeholder-[#6B7280]" 
+                required 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#9CA3AF] text-sm font-medium mb-2">Department</label>
+              <input 
+                name="department" 
+                type="text" 
+                placeholder="Computer Science" 
+                value={form.department} 
+                onChange={handleChange} 
+                className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition placeholder-[#6B7280]" 
+                required 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#9CA3AF] text-sm font-medium mb-2">Staff Number</label>
+              <input 
+                name="staffNumber" 
+                type="text" 
+                placeholder="ST12345" 
+                value={form.staffNumber} 
+                onChange={handleChange} 
+                className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition placeholder-[#6B7280]" 
+                required 
+              />
+            </div>
+
+            <div>
+              <label className="block text-[#9CA3AF] text-sm font-medium mb-2">Phone Number</label>
+              <input 
+                name="phone" 
+                type="tel" 
+                placeholder="1234567890 (10 digits)" 
+                value={form.phone} 
+                onChange={handleChange} 
+                className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition placeholder-[#6B7280]" 
+                pattern="[0-9]{10}" 
+                title="Phone number must be exactly 10 digits" 
+                required 
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full mt-6 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white py-3 rounded-lg font-semibold hover:from-[#2563EB] hover:to-[#1D4ED8] transition-all duration-300 shadow-lg shadow-[#3B82F6]/50 transform hover:scale-[1.02]"
+          >
+            Create Account
+          </button>
+
+          <div className="mt-6 text-center">
+            <p className="text-[#9CA3AF] text-sm">
+              Already have an account?{' '}
+              <span 
+                className="text-[#3B82F6] cursor-pointer hover:text-[#60A5FA] transition font-semibold" 
+                onClick={() => navigate('/')}
+              >
+                Sign In
+              </span>
+            </p>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <p className="text-center text-[#6B7280] text-xs mt-6">
+          © 2025 ClassroomHub. Secure & Reliable.
+        </p>
+      </div>
     </div>
   );
 }
