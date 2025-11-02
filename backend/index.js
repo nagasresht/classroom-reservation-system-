@@ -13,6 +13,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
 // backend/index.js
 const classroomMapRoutes = require('./routes/classroomMapRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 
 
@@ -24,6 +25,7 @@ app.use('/api', authRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/classroom', classroomMapRoutes);
+app.use('/api', notificationRoutes);
 
 if (!process.env.MONGO_URI) {
   console.error('❌ MONGO_URI is not defined in .env file');

@@ -2,6 +2,29 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import { useNavigate } from 'react-router-dom';
 
+// Helper function to format slots display
+function formatSlotsDisplay(slots) {
+  if (!slots || slots.length === 0) return '';
+  if (slots.length === 1) return slots[0];
+  
+  const sortedSlots = [...slots].sort();
+  const timeSlots = [
+    "9:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 1:40",
+    "1:40 - 2:40", "2:40 - 3:40", "3:40 - 4:40"
+  ];
+  
+  const indices = sortedSlots.map(slot => timeSlots.indexOf(slot));
+  const allConsecutive = indices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
+  
+  if (allConsecutive && sortedSlots.length > 1) {
+    const startTime = sortedSlots[0].split(' - ')[0];
+    const endTime = sortedSlots[sortedSlots.length - 1].split(' - ')[1];
+    return `${startTime} - ${endTime} (${sortedSlots.length} slots)`;
+  }
+  
+  return sortedSlots.join(', ');
+}
+
 export default function AdminHistory() {
   const [history, setHistory] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -81,7 +104,9 @@ export default function AdminHistory() {
                   <tr key={booking._id} className="hover:bg-gray-50 transition">
                     <td className="p-3 border text-center">{booking.room}</td>
                     <td className="p-3 border text-center">{booking.date}</td>
-                    <td className="p-3 border text-center">{booking.slot}</td>
+                    <td className="p-3 border text-center">
+                      {formatSlotsDisplay(booking.slots || [booking.slot])}
+                    </td>
                     <td className="p-3 border text-center">{booking.facultyName}</td>
                     <td className="p-3 border text-center">{booking.department}</td>
                     <td className="p-3 border text-center">{booking.reason}</td>

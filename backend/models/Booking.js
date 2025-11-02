@@ -9,9 +9,21 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // Updated to support multiple slots
+  slots: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: function(v) {
+        return Array.isArray(v) && v.length > 0;
+      },
+      message: 'At least one slot must be selected'
+    }
+  },
+  // Keep old slot field for backward compatibility (will be deprecated)
   slot: {
     type: String,
-    required: true
+    required: false
   },
   status: { 
     type: String, 
@@ -41,16 +53,7 @@ const bookingSchema = new mongoose.Schema({
   rejectionReason: String
 }, { timestamps: true });
 
-// Compound index to prevent duplicate approved bookings
-bookingSchema.index(
-  { room: 1, date: 1, slot: 1, status: 1 },
-  { unique: true, partialFilterExpression: { status: 'Approved' } }
-);
-
-// Index to prevent duplicate pending requests from same faculty
-bookingSchema.index(
-  { room: 1, date: 1, slot: 1, facultyName: 1, status: 1 },
-  { unique: true, partialFilterExpression: { status: 'Pending' } }
-);
+// Note: Removed unique indexes as they don't work well with arrays
+// Validation is now handled in the route logic
 
 module.exports = mongoose.model('Booking', bookingSchema);
