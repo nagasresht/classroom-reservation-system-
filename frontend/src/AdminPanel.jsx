@@ -28,6 +28,53 @@ function formatSlotsDisplay(slots) {
   return sortedSlots.join(', ');
 }
 
+// Helper function to check if booking time has passed
+function isBookingExpired(booking) {
+  const bookingDate = new Date(booking.date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  bookingDate.setHours(0, 0, 0, 0);
+  
+  // If booking date is in the past, it's expired
+  if (bookingDate < today) {
+    return true;
+  }
+  
+  // If booking date is today, check if all slots have passed
+  if (bookingDate.getTime() === today.getTime()) {
+    const slots = booking.slots || [booking.slot];
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    
+    // Get the end time of the last slot
+    const lastSlot = slots[slots.length - 1];
+    const endTimeStr = lastSlot.split(' - ')[1] || lastSlot.split('–')[1];
+    
+    // Parse end time
+    let endHour, endMinute;
+    if (endTimeStr.includes(':')) {
+      [endHour, endMinute] = endTimeStr.split(':').map(t => parseInt(t.trim()));
+    } else {
+      // Handle formats like "1:40" or "2:40"
+      const timeParts = endTimeStr.trim().split(':');
+      endHour = parseInt(timeParts[0]);
+      endMinute = timeParts[1] ? parseInt(timeParts[1]) : 0;
+    }
+    
+    // Convert current time to minutes since midnight
+    const currentMinutes = currentHour * 60 + currentMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    
+    // If current time is past the end time of the last slot
+    if (currentMinutes >= endMinutes) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 export default function AdminPanel() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,9 +93,22 @@ export default function AdminPanel() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
+      
+      // First, trigger auto-expiration of old bookings
+      await fetch('http://localhost:5000/api/auto-expire-bookings', {
+        method: 'POST'
+      });
+      
       const res = await fetch(`http://localhost:5000/api/bookings?status=${filter}`);
       const data = await res.json();
-      setBookings(data);
+      
+      // Filter out expired pending bookings from display
+      let filteredData = data;
+      if (filter === 'Pending') {
+        filteredData = data.filter(booking => !isBookingExpired(booking));
+      }
+      
+      setBookings(filteredData);
     } catch (err) {
       console.error('Fetch error:', err);
       alert('Failed to load bookings');

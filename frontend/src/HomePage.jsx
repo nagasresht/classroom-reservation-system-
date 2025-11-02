@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { FaCalendarAlt, FaUser, FaSignOutAlt, FaDoorOpen, FaFlask } from 'react-icons/fa';
+import React, { useEffect, useState, useRef } from 'react';
+import { FaCalendarAlt, FaUser, FaSignOutAlt, FaDoorOpen, FaFlask, FaChevronDown, FaUserCircle, FaHistory } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
 
 const allRooms = [
@@ -55,6 +55,11 @@ export default function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedFaculty, setSelectedFaculty] = useState(facultyList[0]);
   const [selectedSlots, setSelectedSlots] = useState([]); // NEW: Track multiple selected slots
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showBookingHistory, setShowBookingHistory] = useState(false);
+
+  const dropdownRef = useRef(null);
 
   const [bookings, setBookings] = useState([]);
   const [academicSlots, setAcademicSlots] = useState([]);
@@ -75,6 +80,48 @@ export default function HomePage() {
     fetchBookings();
     fetchCalendar();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    window.location.href = "/";
+  };
+
+  const getUserBookings = () => {
+    return bookings.filter(b => b.email === user.email);
+  };
+
+  const formatSlotsDisplay = (slots) => {
+    if (!slots || slots.length === 0) return '';
+    if (slots.length === 1) return slots[0];
+    
+    const sortedSlots = [...slots].sort();
+    const timeSlots = [
+      "9:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 1:40",
+      "1:40 - 2:40", "2:40 - 3:40", "3:40 - 4:40"
+    ];
+    
+    const indices = sortedSlots.map(slot => timeSlots.indexOf(slot));
+    const allConsecutive = indices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
+    
+    if (allConsecutive && sortedSlots.length > 1) {
+      const startTime = sortedSlots[0].split(' - ')[0];
+      const endTime = sortedSlots[sortedSlots.length - 1].split(' - ')[1];
+      return `${startTime} - ${endTime}`;
+    }
+    
+    return sortedSlots.join(', ');
+  };
 
   const getSlotStatus = (slot) => {
     const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
@@ -178,14 +225,15 @@ export default function HomePage() {
     return false;
   });
 
-  const days = Array.from({ length: 7 }, (_, i) => {
+  const days = Array.from({ length: 14 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
     return {
       label: date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
-      value: date.toISOString().split('T')[0]
+      value: date.toISOString().split('T')[0],
+      dayOfWeek: date.getDay()
     };
-  });
+  }).filter(day => day.dayOfWeek !== 0).slice(0, 7); // Filter out Sundays (0) and keep only 7 days
 
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#111827] via-[#1e293b] to-[#111827]">
@@ -200,19 +248,52 @@ export default function HomePage() {
           <span className="text-sm flex items-center gap-2 text-[#9CA3AF] bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151]">
             <FaCalendarAlt className="text-[#3B82F6]" /> {new Date().toLocaleDateString()}
           </span>
-          <span className="text-sm flex items-center gap-2 bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151] text-white font-medium">
-            <FaUser className="text-[#3B82F6]" /> {user.name}
-          </span>
+          
+          {/* User Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="text-sm flex items-center gap-2 bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151] text-white font-medium hover:border-[#3B82F6] transition-all"
+            >
+              <FaUser className="text-[#3B82F6]" /> 
+              {user.name}
+              <FaChevronDown className={`text-[#9CA3AF] transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showUserDropdown && (
+              <div className="absolute right-0 mt-2 w-56 bg-[#1F2937] border border-[#374151] rounded-lg shadow-2xl shadow-black/50 overflow-hidden z-50">
+                <button
+                  onClick={() => {
+                    setShowProfileModal(true);
+                    setShowUserDropdown(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3"
+                >
+                  <FaUserCircle className="text-[#3B82F6]" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBookingHistory(true);
+                    setShowUserDropdown(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-t border-[#374151]"
+                >
+                  <FaHistory className="text-[#3B82F6]" />
+                  Booking History
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 text-left text-red-400 hover:bg-[#374151] transition-colors flex items-center gap-3 border-t border-[#374151]"
+                >
+                  <FaSignOutAlt className="text-red-400" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+
           <NotificationBell userEmail={user.email} />
-          <button 
-            onClick={() => {
-              localStorage.removeItem("user");
-              window.location.href = "/";
-            }} 
-            className="text-sm bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 font-medium shadow-lg shadow-red-600/30"
-          >
-            <FaSignOutAlt /> Logout
-          </button>
         </div>
       </div>
 
@@ -375,6 +456,134 @@ export default function HomePage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-md p-8 border border-[#374151]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <FaUserCircle className="text-[#3B82F6]" />
+                Profile
+              </h2>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="text-[#9CA3AF] hover:text-white text-2xl transition"
+              >
+                ✖
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-sm">Name</p>
+                <p className="text-white font-semibold">{user.name}</p>
+              </div>
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-sm">Email</p>
+                <p className="text-white font-semibold">{user.email}</p>
+              </div>
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-sm">Department</p>
+                <p className="text-white font-semibold">{user.department}</p>
+              </div>
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-sm">Staff Number</p>
+                <p className="text-white font-semibold">{user.staffNumber}</p>
+              </div>
+              {user.phone && (
+                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-sm">Phone</p>
+                  <p className="text-white font-semibold">{user.phone}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking History Modal */}
+      {showBookingHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
+          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-[#374151]">
+            <div className="flex justify-between items-center p-6 border-b border-[#374151]">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <FaHistory className="text-[#3B82F6]" />
+                My Booking History
+              </h2>
+              <button
+                onClick={() => setShowBookingHistory(false)}
+                className="text-[#9CA3AF] hover:text-white text-2xl transition"
+              >
+                ✖
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+              {getUserBookings().length === 0 ? (
+                <div className="text-center py-12">
+                  <FaHistory className="text-6xl text-[#374151] mx-auto mb-4" />
+                  <p className="text-[#9CA3AF] text-lg">No bookings yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {getUserBookings().map((booking) => (
+                    <div
+                      key={booking._id}
+                      className="bg-[#111827] p-5 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-white font-bold text-lg">{booking.room}</h3>
+                          <p className="text-[#9CA3AF] text-sm">
+                            {new Date(booking.date).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          booking.status === 'Approved' 
+                            ? 'bg-green-600 text-white' 
+                            : booking.status === 'Rejected'
+                            ? 'bg-red-600 text-white'
+                            : 'bg-yellow-500 text-yellow-900'
+                        }`}>
+                          {booking.status}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
+                          <p className="text-[#9CA3AF] text-xs mb-1">Time Slot(s)</p>
+                          <p className="text-white font-semibold text-sm">
+                            {formatSlotsDisplay(booking.slots || [booking.slot])}
+                          </p>
+                        </div>
+                        <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
+                          <p className="text-[#9CA3AF] text-xs mb-1">Booked On</p>
+                          <p className="text-white font-semibold text-sm">
+                            {new Date(booking.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
+                        <p className="text-[#9CA3AF] text-xs mb-1">Reason</p>
+                        <p className="text-white text-sm">{booking.reason}</p>
+                      </div>
+                      {booking.status === 'Rejected' && booking.rejectionReason && (
+                        <div className="mt-3 bg-red-900/20 border border-red-900/50 p-3 rounded">
+                          <p className="text-red-400 text-xs mb-1">Rejection Reason</p>
+                          <p className="text-red-300 text-sm">{booking.rejectionReason}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

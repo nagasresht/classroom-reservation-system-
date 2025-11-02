@@ -154,6 +154,62 @@ function formatSlotsForDisplay(slots) {
   return sortedSlots.join(', ');
 }
 
+// Auto-expire pending bookings that have passed their time slot
+router.post('/auto-expire-bookings', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get all pending bookings
+    const pendingBookings = await Booking.find({ status: 'Pending' });
+    let expiredCount = 0;
+    
+    for (const booking of pendingBookings) {
+      const bookingDate = new Date(booking.date);
+      bookingDate.setHours(0, 0, 0, 0);
+      
+      let isExpired = false;
+      
+      // If booking date is in the past
+      if (bookingDate < today) {
+        isExpired = true;
+      } else if (bookingDate.getTime() === today.getTime()) {
+        // If booking is today, check if time has passed
+        const slots = booking.slots || [booking.slot];
+        const lastSlot = slots[slots.length - 1];
+        const endTimeStr = lastSlot.split(' - ')[1] || lastSlot.split('–')[1];
+        
+        if (endTimeStr) {
+          const timeParts = endTimeStr.trim().split(':');
+          const endHour = parseInt(timeParts[0]);
+          const endMinute = timeParts[1] ? parseInt(timeParts[1]) : 0;
+          
+          const currentHour = today.getHours();
+          const currentMinute = today.getMinutes();
+          const currentMinutes = currentHour * 60 + currentMinute;
+          const endMinutes = endHour * 60 + endMinute;
+          
+          if (currentMinutes >= endMinutes) {
+            isExpired = true;
+          }
+        }
+      }
+      
+      if (isExpired) {
+        booking.status = 'Rejected';
+        booking.rejectionReason = 'Time slot expired (auto-rejected)';
+        await booking.save();
+        expiredCount++;
+      }
+    }
+    
+    res.json({ message: `${expiredCount} expired bookings auto-rejected`, count: expiredCount });
+  } catch (err) {
+    console.error('Auto-expire error:', err);
+    res.status(500).json({ message: 'Error auto-expiring bookings' });
+  }
+});
+
 router.delete('/reset-bookings', async (req, res) => {
   try {
     await Booking.deleteMany({});
