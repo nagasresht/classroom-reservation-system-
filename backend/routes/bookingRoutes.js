@@ -5,6 +5,8 @@ const Notification = require('../models/Notification');
 
 router.post('/book', async (req, res) => {
   try {
+    console.log('📝 New booking request received:', req.body);
+    
     const { slots, ...restData } = req.body;
     
     // Ensure slots is an array (backward compatibility with old single slot format)
@@ -12,6 +14,9 @@ router.post('/book', async (req, res) => {
     if (!Array.isArray(slots)) {
       slotsArray = [slots];
     }
+
+    console.log('Slots array:', slotsArray);
+    console.log('Status from request:', restData.status);
 
     // Validate all slots are available
     for (const slot of slotsArray) {
@@ -23,6 +28,7 @@ router.post('/book', async (req, res) => {
       });
 
       if (existingApproved) {
+        console.log(`❌ Slot ${slot} already approved`);
         return res.status(400).json({ 
           message: `Slot ${slot} is already approved for ${existingApproved.facultyName}` 
         });
@@ -37,6 +43,7 @@ router.post('/book', async (req, res) => {
       });
 
       if (existingPending) {
+        console.log(`❌ You already have pending request for slot ${slot}`);
         return res.status(400).json({ 
           message: `You already have a pending request for slot ${slot}` 
         });
@@ -49,19 +56,52 @@ router.post('/book', async (req, res) => {
       slots: slotsArray
     });
     
+    console.log('💾 Saving booking with data:', {
+      room: booking.room,
+      date: booking.date,
+      slots: booking.slots,
+      status: booking.status,
+      email: booking.email
+    });
+    
     await booking.save();
+    
+    console.log('✅ Booking saved successfully with ID:', booking._id);
+    console.log('Final booking status:', booking.status);
+    
     res.status(201).json({ message: 'Booking submitted successfully' });
   } catch (err) {
-    console.error('Booking error:', err);
+    console.error('❌ Booking error:', err);
     res.status(500).json({ message: 'Server error while booking' });
   }
 });
 
 router.get('/bookings', async (req, res) => {
   try {
-    const bookings = await Booking.find();
+    // FIXED: Support filtering by status query parameter
+    // Example: /api/bookings?status=Pending
+    const { status } = req.query;
+    
+    console.log('GET /bookings called with status:', status || 'all');
+    
+    let query = {};
+    // Only filter by status if it's provided and not empty
+    if (status && status !== '') {
+      query.status = status;
+    }
+    
+    const bookings = await Booking.find(query).sort({ createdAt: -1 }); // Sort by newest first
+    
+    console.log(`Found ${bookings.length} bookings with query:`, query);
+    console.log('Status breakdown:', {
+      Pending: bookings.filter(b => b.status === 'Pending').length,
+      Approved: bookings.filter(b => b.status === 'Approved').length,
+      Rejected: bookings.filter(b => b.status === 'Rejected').length
+    });
+    
     res.json(bookings);
   } catch (err) {
+    console.error('Fetch bookings error:', err);
     res.status(500).json({ message: 'Server error fetching bookings' });
   }
 });

@@ -95,20 +95,36 @@ export default function AdminPanel() {
       setLoading(true);
       
       // First, trigger auto-expiration of old bookings
-      await fetch('http://localhost:5000/api/auto-expire-bookings', {
-        method: 'POST'
-      });
-      
-      const res = await fetch(`http://localhost:5000/api/bookings?status=${filter}`);
-      const data = await res.json();
-      
-      // Filter out expired pending bookings from display
-      let filteredData = data;
-      if (filter === 'Pending') {
-        filteredData = data.filter(booking => !isBookingExpired(booking));
+      try {
+        await fetch('http://localhost:5000/api/auto-expire-bookings', {
+          method: 'POST'
+        });
+      } catch (expireErr) {
+        console.warn('Auto-expire failed, continuing:', expireErr);
       }
       
-      setBookings(filteredData);
+      // FIXED: Properly construct the query URL with status filter
+      // When filter is empty string, fetch all bookings (no status filter)
+      const statusParam = filter ? `status=${filter}` : '';
+      const url = `http://localhost:5000/api/bookings${statusParam ? '?' + statusParam : ''}`;
+      
+      console.log('Fetching bookings with URL:', url);
+      console.log('Current filter:', filter);
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      console.log('Received bookings:', data.length);
+      console.log('Bookings by status:', {
+        Pending: data.filter(b => b.status === 'Pending').length,
+        Approved: data.filter(b => b.status === 'Approved').length,
+        Rejected: data.filter(b => b.status === 'Rejected').length
+      });
+      
+      // REMOVED: Don't filter out expired bookings on frontend
+      // Let the backend handle expiration
+      setBookings(data);
+      
     } catch (err) {
       console.error('Fetch error:', err);
       alert('Failed to load bookings');
@@ -215,9 +231,31 @@ export default function AdminPanel() {
         {loading ? (
           <p className="text-center text-gray-500">Loading bookings...</p>
         ) : bookings.length === 0 ? (
-          <p className="text-center text-gray-600">No bookings found</p>
+          <div className="text-center text-gray-600 p-8 bg-white rounded-lg shadow">
+            <p className="text-lg font-semibold mb-2">No {filter || 'All'} bookings found</p>
+            <p className="text-sm text-gray-500">
+              {filter === 'Pending' && 'There are no pending booking requests at the moment.'}
+              {filter === 'Approved' && 'No bookings have been approved yet.'}
+              {filter === 'Rejected' && 'No bookings have been rejected yet.'}
+              {!filter && 'No bookings exist in the system yet.'}
+            </p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div>
+            {/* ADDED: Display current filter category for clarity */}
+            <div className="mb-4 p-3 bg-white rounded-lg shadow">
+              <p className="text-sm font-semibold text-gray-700">
+                Showing: <span className={`${
+                  filter === 'Pending' ? 'text-purple-600' :
+                  filter === 'Approved' ? 'text-green-600' :
+                  filter === 'Rejected' ? 'text-red-600' :
+                  'text-blue-600'
+                }`}>
+                  {filter || 'All'} Bookings
+                </span> ({bookings.length} total)
+              </p>
+            </div>
+            <div className="overflow-x-auto">
             <table className="w-full table-auto border border-gray-200 rounded-xl shadow-md overflow-hidden">
               <thead className="bg-purple-100 text-gray-700">
                 <tr>
@@ -296,6 +334,7 @@ export default function AdminPanel() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
         )}
       </div>

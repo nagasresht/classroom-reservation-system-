@@ -169,12 +169,14 @@ export default function HomePage() {
       room: selectedRoom.name,
       slots: selectedSlots, // Send array of slots
       reason,
-      status: "Pending",
+      // REMOVED: Don't send status - let backend set default 'Pending'
       facultyName: user.name,
       email: user.email,
       department: user.department,
       staffNumber: user.staffNumber
     };
+
+    console.log('📤 Sending booking request:', booking);
 
     const res = await fetch("http://localhost:5000/api/book", {
       method: "POST",
