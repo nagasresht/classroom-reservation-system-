@@ -9,7 +9,7 @@ export default function Sidebar() {
   const links = [
     { label: 'Dashboard', icon: <FaHome />, path: '/admin-dashboard' },
     { label: 'Booking Requests', icon: <FaClipboardList />, path: '/admin' },
-    { label: 'Add Timetable', icon: <FaCalendarAlt />, path: '/admin-calendar' },
+    { label: 'Add Timetable', icon: <FaCalendarAlt />, path: '/admin-add-timetable' },
     { label: 'View Timetable', icon: <FaBook />, path: '/admin-timetable' },
     { label: 'Booking History', icon: <FaHistory />, path: '/admin-history' }
   ];

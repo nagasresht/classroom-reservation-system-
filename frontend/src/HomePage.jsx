@@ -154,6 +154,36 @@ export default function HomePage() {
     });
   };
 
+  // NEW: Calculate available slots for a room on selected date
+  const getAvailableSlotCount = (roomName) => {
+    const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+    
+    let availableCount = 0;
+    
+    timeSlots.forEach(slot => {
+      // Check if slot is blocked by academic calendar
+      const academicBlocked = academicSlots.some(entry =>
+        entry.day === dayOfWeek &&
+        entry.slot === slot &&
+        entry.room === roomName
+      );
+      
+      if (academicBlocked) return; // Skip this slot
+      
+      // Check if slot is approved by someone
+      const slotBookings = bookings.filter(
+        (b) => b.slots?.includes(slot) && b.room === roomName && b.date === selectedDate
+      );
+      const approved = slotBookings.find(b => b.status === "Approved");
+      
+      if (!approved) {
+        availableCount++; // This slot is free
+      }
+    });
+    
+    return availableCount;
+  };
+
   // Updated to handle multiple slots
   const handleBookSlots = async () => {
     if (selectedSlots.length === 0) {
@@ -361,20 +391,31 @@ export default function HomePage() {
         <>
           {/* Room/Lab Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mb-10">
-            {filteredRooms.map((room) => (
-              <div
-                key={room.id}
-                onClick={() => setSelectedRoom(room)}
-                className={`cursor-pointer px-3 py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${
-                  selectedRoom?.id === room.id 
-                    ? "bg-[#3B82F6] border-[#3B82F6] text-white shadow-[#3B82F6]/50 ring-2 ring-[#60A5FA]" 
-                    : "bg-[#1F2937] border-[#374151] text-white hover:border-[#3B82F6]"
-                }`}
-              >
-                <div className="text-sm font-bold truncate">{room.name}</div>
-                <div className="text-xs text-[#9CA3AF] mt-1">{room.type}</div>
-              </div>
-            ))}
+            {filteredRooms.map((room) => {
+              const availableSlots = getAvailableSlotCount(room.name);
+              const totalSlots = timeSlots.length;
+              
+              return (
+                <div
+                  key={room.id}
+                  onClick={() => setSelectedRoom(room)}
+                  className={`cursor-pointer px-3 py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${
+                    selectedRoom?.id === room.id 
+                      ? "bg-[#3B82F6] border-[#3B82F6] text-white shadow-[#3B82F6]/50 ring-2 ring-[#60A5FA]" 
+                      : "bg-[#1F2937] border-[#374151] text-white hover:border-[#3B82F6]"
+                  }`}
+                >
+                  <div className="text-sm font-bold truncate">{room.name}</div>
+                  <div className="text-xs text-[#9CA3AF] mt-1">{room.type}</div>
+                  {/* Available Slots Count */}
+                  <div className={`text-xs mt-2 font-semibold ${
+                    selectedRoom?.id === room.id ? 'text-white' : 'text-[#3B82F6]'
+                  }`}>
+                    {availableSlots}/{totalSlots} slots
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Time Slots */}

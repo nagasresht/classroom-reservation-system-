@@ -9,15 +9,32 @@ export default function AdminTimetableView() {
 
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  const timeSlots = [
-    "9:00 - 10:00",
-    "10:00 - 11:00",
-    "11:00 - 12:00",
-    "12:00 - 1:40",
-    "1:40 - 2:40",
-    "2:40 - 3:40",
-    "3:40 - 4:40"
-  ];
+  // Time slots based on year selection
+  const getTimeSlots = () => {
+    if (year === '1st Year') {
+      return [
+        "9:00-10:00",
+        "10:00-11:00",
+        "11:00-12:00",
+        "12:00-12:40 (Break)",
+        "12:40-1:40",
+        "1:40-2:40",
+        "2:40-3:40"
+      ];
+    } else {
+      return [
+        "10:00-11:00",
+        "11:00-12:00",
+        "12:00-1:00",
+        "1:00-1:40 (Break)",
+        "1:40-2:40",
+        "2:40-3:40",
+        "3:40-4:40"
+      ];
+    }
+  };
+
+  const timeSlots = getTimeSlots();
 
   const fetchTimetable = async () => {
     if (!year || !section) return;
@@ -25,15 +42,19 @@ export default function AdminTimetableView() {
     try {
       const res = await fetch(`http://localhost:5000/api/calendar/view?year=${year}&section=${section}`);
       const data = await res.json();
+      console.log("Fetched timetable data:", data);
       setTimetable(data);
     } catch (err) {
       console.error("Error fetching timetable:", err);
+      alert("Failed to fetch timetable. Please try again.");
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchTimetable();
+    if (year && section) {
+      fetchTimetable();
+    }
   }, [year, section]);
 
   return (
@@ -44,52 +65,75 @@ export default function AdminTimetableView() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-6">
-          <select value={year} onChange={(e) => setYear(e.target.value)} className="border px-4 py-2 rounded shadow">
+          <select 
+            value={year} 
+            onChange={(e) => setYear(e.target.value)} 
+            className="border border-gray-300 px-4 py-2 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
             <option value="">Select Year</option>
             <option value="1st Year">1st Year</option>
             <option value="2nd Year">2nd Year</option>
             <option value="3rd Year">3rd Year</option>
             <option value="4th Year">4th Year</option>
           </select>
-          <select value={section} onChange={(e) => setSection(e.target.value)} className="border px-4 py-2 rounded shadow">
+          <select 
+            value={section} 
+            onChange={(e) => setSection(e.target.value)} 
+            className="border border-gray-300 px-4 py-2 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
             <option value="">Select Section</option>
-            <option value="CSE-1">CSE-1</option>
-            <option value="CSE-2">CSE-2</option>
-            <option value="CSE-3">CSE-3</option>
-            <option value="CSE-4">CSE-4</option>
-            <option value="CSBS">CSBS</option>
+            <option value="A">Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+            <option value="D">Section D</option>
           </select>
         </div>
 
         {loading ? (
           <p className="text-center text-gray-600">Loading timetable...</p>
         ) : year && section ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300 rounded-lg text-sm">
+          <div className="overflow-x-auto bg-white rounded-lg shadow">
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-purple-100 text-purple-800 text-center">
-                  <th className="border px-4 py-2">Day / Slot</th>
+                <tr className="bg-purple-600 text-white text-center">
+                  <th className="border border-gray-300 px-4 py-3 font-semibold">Day / Time</th>
                   {timeSlots.map(slot => (
-                    <th key={slot} className="border px-4 py-2">{slot}</th>
+                    <th key={slot} className="border border-gray-300 px-4 py-3 font-semibold whitespace-nowrap">{slot}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {days.map(day => (
-                  <tr key={day} className="hover:bg-gray-50 text-center">
-                    <td className="border font-medium bg-gray-100">{day}</td>
-                    {timeSlots.map(slot => (
-                      <td key={slot} className="border px-2 py-1 text-xs whitespace-pre-line">
-                        {timetable?.[day]?.[slot] || ""}
-                      </td>
-                    ))}
+                  <tr key={day} className="hover:bg-purple-50 text-center">
+                    <td className="border border-gray-300 font-semibold bg-purple-100 text-purple-800 px-4 py-3">{day}</td>
+                    {timeSlots.map(slot => {
+                      const cellContent = timetable?.[day]?.[slot];
+                      const isBreak = slot.includes("Break");
+                      
+                      return (
+                        <td 
+                          key={slot} 
+                          className={`border border-gray-300 px-3 py-3 text-xs ${
+                            isBreak 
+                              ? 'bg-gray-200 text-gray-500 italic' 
+                              : cellContent 
+                                ? 'bg-blue-50 text-blue-900 font-medium' 
+                                : 'bg-white text-gray-400'
+                          }`}
+                        >
+                          {isBreak ? "BREAK" : cellContent || "-"}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-center text-gray-600 mt-4">Please select both year and section.</p>
+          <div className="text-center mt-8">
+            <p className="text-gray-600 text-lg">📅 Please select both <strong>Year</strong> and <strong>Section</strong> to view the timetable.</p>
+          </div>
         )}
       </div>
     </div>

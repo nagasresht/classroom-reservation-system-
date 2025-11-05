@@ -53,10 +53,10 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => navigate('/admin-calendar')}
+            onClick={() => navigate('/admin-add-timetable')}
             className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-4 rounded-xl shadow flex items-center justify-center gap-2 text-lg"
           >
-            <FaCalendarAlt /> Add Timetable
+            <FaCalendarAlt /> Add Timetable Entry
           </button>
 
           <button
