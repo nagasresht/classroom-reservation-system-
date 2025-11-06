@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const crypto = require('crypto');
+const { generateOTP, sendOTPEmail } = require('../utils/emailService');
 
 router.post('/register', async (req, res) => {
   const { name, email, password, department, staffNumber, phone } = req.body;
@@ -21,12 +22,114 @@ router.post('/register', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
-    const newUser = new User({ name, email, password, department, staffNumber, phone });
+    // Generate OTP
+    const otp = generateOTP();
+    const otpExpiry = Date.now() + 600000; // 10 minutes
+
+    // Create user with OTP (not verified yet)
+    const newUser = new User({ 
+      name, 
+      email, 
+      password, 
+      department, 
+      staffNumber, 
+      phone,
+      isVerified: false,
+      otp,
+      otpExpiry
+    });
     await newUser.save();
-    res.status(201).json({ message: 'User registered successfully' });
+
+    // Send OTP email
+    const emailSent = await sendOTPEmail(email, name, otp);
+
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+    }
+
+    res.status(201).json({ 
+      message: 'Registration successful! Please check your email for OTP verification.',
+      email: email // Send email back so frontend knows where OTP was sent
+    });
 
   } catch (err) {
+    console.error('Registration error:', err);
     res.status(500).json({ message: 'Server error during registration' });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: 'Email and OTP are required' });
+  }
+
+  try {
+    const user = await User.findOne({ 
+      email,
+      otp,
+      otpExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Mark user as verified
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Email verified successfully! You can now login.' });
+
+  } catch (err) {
+    console.error('OTP verification error:', err);
+    res.status(500).json({ message: 'Server error during OTP verification' });
+  }
+});
+
+// Resend OTP
+router.post('/resend-otp', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'Email already verified' });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = Date.now() + 600000; // 10 minutes
+
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+    await user.save();
+
+    // Send OTP email
+    const emailSent = await sendOTPEmail(email, user.name, otp);
+
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Failed to resend verification email. Please try again.' });
+    }
+
+    res.status(200).json({ message: 'OTP resent successfully! Please check your email.' });
+
+  } catch (err) {
+    console.error('Resend OTP error:', err);
+    res.status(500).json({ message: 'Server error during OTP resend' });
   }
 });
 
@@ -36,6 +139,15 @@ router.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email, password });
     if (!user) return res.status(400).json({ message: 'Invalid email or password' });
+
+    // Check if email is verified
+    if (!user.isVerified) {
+      return res.status(403).json({ 
+        message: 'Please verify your email before logging in',
+        needsVerification: true,
+        email: email
+      });
+    }
 
     res.status(200).json(user);
 

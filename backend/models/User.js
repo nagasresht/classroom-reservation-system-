@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema({
       message: 'Phone number must be exactly 10 digits'
     }
   },
+  isVerified: { type: Boolean, default: false },
+  otp: { type: String, default: null },
+  otpExpiry: { type: Date, default: null },
   resetToken: { type: String, default: null },
   resetTokenExpiry: { type: Date, default: null }
 });

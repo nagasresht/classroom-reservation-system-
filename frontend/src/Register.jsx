@@ -22,7 +22,7 @@ export default function Register() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -34,8 +34,9 @@ export default function Register() {
         return;
       }
 
-      alert('Registered successfully! Please login.');
-      navigate('/');
+      // Redirect to OTP verification page
+      alert(data.message);
+      navigate('/verify-otp', { state: { email: data.email } });
     } catch (err) {
       setError('Server error. Try again later.');
     }

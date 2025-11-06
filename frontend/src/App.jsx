@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import Register from './Register';
+import VerifyOTP from './VerifyOTP';
 import ForgotPassword from './ForgotPassword';
 import ResetPassword from './ResetPassword';
 import HomePage from './HomePage';
@@ -21,6 +22,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-otp" element={<VerifyOTP />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/dashboard" element={<PrivateRoute><HomePage /></PrivateRoute>} />
