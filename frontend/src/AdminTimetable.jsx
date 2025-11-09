@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +19,8 @@ export default function AdminTimetable() {
   const [message, setMessage] = useState('');
   const [facultySearch, setFacultySearch] = useState('');
   const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
+  const [savedSectionRoom, setSavedSectionRoom] = useState(null);
+  const [allowRoomChange, setAllowRoomChange] = useState(false);
 
 
   // Faculty list
@@ -115,6 +117,37 @@ export default function AdminTimetable() {
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const types = ["Class", "Lab"];
 
+  // Theory/Class rooms (for first-time selection)
+  const theoryRooms = [
+    "E003", "E004", "E005", "E006", "E012 & E013", 
+    "E032", "E033", "E034 (Audi)", "E035", "E036", "E037", "E038"
+  ];
+
+  // Lab rooms (for lab selection)
+  const labRooms = [
+    "E001", "E002", "E014 & E015", "E028", "E029", "E030 & E031"
+  ];
+
+  // Fetch saved section room when year and section are selected
+  useEffect(() => {
+    const fetchSectionRoom = async () => {
+      if (formData.year && formData.section) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/calendar/section-room/${formData.year}/${formData.section}`);
+          const data = await res.json();
+          setSavedSectionRoom(data.room);
+          if (data.room && formData.type === 'Class') {
+            handleChange('room', data.room);
+          }
+        } catch (error) {
+          console.error('Error fetching section room:', error);
+          setSavedSectionRoom(null);
+        }
+      }
+    };
+    fetchSectionRoom();
+  }, [formData.year, formData.section, formData.type]);
+
   // Get available slots based on year
   const getAvailableSlots = () => {
     if (formData.year === "1st Year") {
@@ -176,7 +209,22 @@ export default function AdminTimetable() {
           faculty: formData.faculty
         }));
       } else {
-        // Single class entry
+        // Single class entry - use the saved or newly selected room
+        const classRoom = formData.room;
+        
+        // If this is the first time (no saved room) OR room is being changed, save/update the room mapping
+        if ((!savedSectionRoom || allowRoomChange) && classRoom) {
+          await fetch('http://localhost:5000/api/calendar/section-room', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              year: formData.year,
+              section: formData.section,
+              room: classRoom
+            })
+          });
+        }
+
         entries = [{
           year: formData.year,
           section: formData.section,
@@ -184,7 +232,7 @@ export default function AdminTimetable() {
           slot: formData.classSlot,
           type: 'Class',
           subject: formData.subject,
-          room: formData.room,
+          room: classRoom || savedSectionRoom,
           faculty: formData.faculty
         }];
       }
@@ -215,6 +263,8 @@ export default function AdminTimetable() {
           });
           setStep(1);
           setMessage('');
+          setAllowRoomChange(false);
+          setSavedSectionRoom(null);
         }, 2000);
       } else {
         setMessage('❌ ' + (data.message || 'Failed to add timetable entry'));
@@ -232,12 +282,46 @@ export default function AdminTimetable() {
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-purple-700">Add Timetable Entry</h1>
-            <button
-              onClick={() => navigate('/admin-dashboard')}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded"
-            >
-              ← Back
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  if (window.confirm('⚠️ WARNING: This will delete ALL timetable entries and section room mappings!\n\nThis action cannot be undone. Are you sure?')) {
+                    try {
+                      // Delete all academic calendar entries
+                      const res1 = await fetch('http://localhost:5000/api/calendar/delete-all', {
+                        method: 'DELETE'
+                      });
+                      const data1 = await res1.json();
+                      
+                      // Delete all section room mappings
+                      const res2 = await fetch('http://localhost:5000/api/calendar/delete-all-rooms', {
+                        method: 'DELETE'
+                      });
+                      const data2 = await res2.json();
+                      
+                      if (res1.ok && res2.ok) {
+                        alert(`✅ Successfully deleted:\n- ${data1.deletedCount} timetable entries\n- ${data2.deletedCount} section room mappings`);
+                        window.location.reload();
+                      } else {
+                        alert('❌ Failed to delete some data');
+                      }
+                    } catch (error) {
+                      console.error(error);
+                      alert('❌ Error deleting data');
+                    }
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded transition"
+              >
+                🗑️ Delete All Data
+              </button>
+              <button
+                onClick={() => navigate('/admin-dashboard')}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded"
+              >
+                ← Back
+              </button>
+            </div>
           </div>
 
           {/* Progress Steps */}
@@ -395,16 +479,80 @@ export default function AdminTimetable() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Room Number</label>
-                    <input
-                      type="text"
-                      value={formData.room}
-                      onChange={(e) => handleChange('room', e.target.value)}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      placeholder="e.g., A 117"
-                    />
-                  </div>
+                  {formData.type === 'Lab' ? (
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Lab Room</label>
+                      <select
+                        value={formData.room}
+                        onChange={(e) => handleChange('room', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                      >
+                        <option value="">Select Lab Room</option>
+                        {labRooms.map(room => (
+                          <option key={room} value={room}>{room}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : savedSectionRoom && !allowRoomChange ? (
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Classroom (Saved)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={savedSectionRoom}
+                          disabled
+                          className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-600 cursor-not-allowed"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAllowRoomChange(true);
+                            handleChange('room', '');
+                          }}
+                          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition whitespace-nowrap"
+                        >
+                          Change Room
+                        </button>
+                      </div>
+                      <p className="text-xs text-green-600 mt-1">
+                        ✓ Using saved classroom for {formData.year} Section {formData.section}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        {savedSectionRoom ? 'Update Classroom' : 'Select Classroom (First Time)'}
+                      </label>
+                      <select
+                        value={formData.room}
+                        onChange={(e) => handleChange('room', e.target.value)}
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                      >
+                        <option value="">Select Theory Room</option>
+                        {theoryRooms.map(room => (
+                          <option key={room} value={room}>{room}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {savedSectionRoom 
+                          ? `Changing classroom for ${formData.year} Section ${formData.section}. This will update all future entries.`
+                          : `This room will be saved for all future classes of ${formData.year} Section ${formData.section}`
+                        }
+                      </p>
+                      {savedSectionRoom && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAllowRoomChange(false);
+                            handleChange('room', savedSectionRoom);
+                          }}
+                          className="mt-2 text-sm text-purple-600 hover:text-purple-800"
+                        >
+                          ← Cancel, keep {savedSectionRoom}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {formData.type === 'Lab' ? (
                     <div>
@@ -450,8 +598,9 @@ export default function AdminTimetable() {
                   </button>
                   <button
                     onClick={handleNext}
-                    disabled={!formData.subject || !formData.room || 
-                      (formData.type === 'Lab' ? !formData.labSlot : !formData.classSlot)}
+                    disabled={!formData.subject || 
+                      (formData.type === 'Lab' ? (!formData.room || !formData.labSlot) : 
+                        (!formData.classSlot || (!savedSectionRoom && !formData.room)))}
                     className="flex-1 bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     Next

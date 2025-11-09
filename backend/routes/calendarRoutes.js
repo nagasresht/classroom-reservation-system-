@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AcademicCalendar = require('../models/AcademicCalendar');
 const ClassroomMap = require('../models/ClassroomMap');
+const SectionRoom = require('../models/SectionRoom');
 
 // 1. Save timetable entries (bulk insert)
 router.post('/bulk', async (req, res) => {
@@ -110,6 +111,82 @@ router.get('/get-room', async (req, res) => {
 // 6. Ping route (health check)
 router.get('/ping', (req, res) => {
   res.send('pong');
+});
+
+// 7. Get section room mapping
+router.get('/section-room/:year/:section', async (req, res) => {
+  const { year, section } = req.params;
+  try {
+    const mapping = await SectionRoom.findOne({ year, section });
+    if (mapping) {
+      res.json({ room: mapping.room });
+    } else {
+      res.json({ room: null });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching section room mapping' });
+  }
+});
+
+// 8. Save section room mapping
+router.post('/section-room', async (req, res) => {
+  const { year, section, room } = req.body;
+  if (!year || !section || !room) {
+    return res.status(400).json({ message: 'Year, section, and room are required' });
+  }
+
+  try {
+    // Use findOneAndUpdate with upsert to create or update
+    const mapping = await SectionRoom.findOneAndUpdate(
+      { year, section },
+      { room },
+      { upsert: true, new: true }
+    );
+    res.status(201).json({ message: 'Section room mapping saved', data: mapping });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error saving section room mapping' });
+  }
+});
+
+// 9. Get all section room mappings
+router.get('/section-rooms', async (req, res) => {
+  try {
+    const mappings = await SectionRoom.find().sort({ year: 1, section: 1 });
+    res.json(mappings);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching section room mappings' });
+  }
+});
+
+// 10. Delete all academic calendar entries (for testing/reset)
+router.delete('/delete-all', async (req, res) => {
+  try {
+    const result = await AcademicCalendar.deleteMany({});
+    res.json({ 
+      message: 'All academic calendar entries deleted successfully', 
+      deletedCount: result.deletedCount 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error deleting academic calendar entries' });
+  }
+});
+
+// 11. Delete all section room mappings (for testing/reset)
+router.delete('/delete-all-rooms', async (req, res) => {
+  try {
+    const result = await SectionRoom.deleteMany({});
+    res.json({ 
+      message: 'All section room mappings deleted successfully', 
+      deletedCount: result.deletedCount 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error deleting section room mappings' });
+  }
 });
 
 module.exports = router;

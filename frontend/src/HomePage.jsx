@@ -113,7 +113,30 @@ const facultyList = [
 
 export default function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  // Get today's date in consistent format (YYYY-MM-DD in local timezone)
+  const getTodayDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Get initial selected date (skip Sunday)
+  const getInitialDate = () => {
+    const now = new Date();
+    // If today is Sunday (0), move to Monday (next day)
+    if (now.getDay() === 0) {
+      now.setDate(now.getDate() + 1);
+    }
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const [selectedDate, setSelectedDate] = useState(getInitialDate());
   const [activeTab, setActiveTab] = useState("Rooms");
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedFaculty, setSelectedFaculty] = useState(facultyList[0]);
@@ -123,6 +146,8 @@ export default function HomePage() {
   const [showBookingHistory, setShowBookingHistory] = useState(false);
   const [facultySearch, setFacultySearch] = useState('');
   const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
+  const [showAcademicModal, setShowAcademicModal] = useState(false);
+  const [selectedAcademicDetails, setSelectedAcademicDetails] = useState(null);
 
   const dropdownRef = useRef(null);
   const facultyDropdownRef = useRef(null);
@@ -250,12 +275,17 @@ export default function HomePage() {
     }
 
     const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-    const academicBlocked = academicSlots.some(entry =>
+    const academicEntry = academicSlots.find(entry =>
       entry.day === dayOfWeek &&
       entry.slot === slot &&
       entry.room === selectedRoom?.name
     );
-    if (academicBlocked) return "Blocked (Academic)";
+    if (academicEntry) {
+      return {
+        type: "Academic",
+        details: academicEntry
+      };
+    }
 
     // Updated to check slots array instead of single slot
     const slotBookings = bookings.filter(
@@ -385,9 +415,14 @@ export default function HomePage() {
   const days = Array.from({ length: 14 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateValue = `${year}-${month}-${day}`;
+    
     return {
       label: date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
-      value: date.toISOString().split('T')[0],
+      value: dateValue,
       dayOfWeek: date.getDay()
     };
   }).filter(day => day.dayOfWeek !== 0).slice(0, 7); // Filter out Sundays (0) and keep only 7 days
@@ -600,22 +635,26 @@ export default function HomePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {timeSlots.map(slot => {
                   const status = getSlotStatus(slot);
+                  const isAcademic = typeof status === 'object' && status.type === 'Academic';
+                  const statusText = isAcademic ? 'Academic Class' : status;
                   const isSelected = selectedSlots.includes(slot);
-                  const isFree = status === "Free";
-                  const isExpired = status === "Expired";
+                  const isFree = statusText === "Free";
+                  const isExpired = statusText === "Expired";
                   
                   let bgClass = "";
                   if (isExpired) {
                     bgClass = "bg-[#6B7280] text-[#D1D5DB] cursor-not-allowed opacity-60";
+                  } else if (isAcademic) {
+                    bgClass = "bg-purple-600 text-white shadow-purple-600/50 cursor-pointer";
                   } else if (isSelected && isFree) {
                     bgClass = "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50 ring-4 ring-[#60A5FA] scale-105";
                   } else if (isFree) {
                     bgClass = "bg-[#1F2937] hover:bg-[#374151] text-white border-2 border-[#3B82F6] hover:border-[#60A5FA]";
-                  } else if (status === "Pending") {
+                  } else if (statusText === "Pending") {
                     bgClass = "bg-yellow-500 text-yellow-900 border-yellow-600";
-                  } else if (status.startsWith("Approved") || status === "Approved") {
+                  } else if (statusText.startsWith("Approved") || statusText === "Approved") {
                     bgClass = "bg-green-600 text-white shadow-green-600/50";
-                  } else if (status.startsWith("Blocked")) {
+                  } else if (statusText.startsWith("Blocked")) {
                     bgClass = "bg-[#374151] text-[#9CA3AF] cursor-not-allowed";
                   } else {
                     bgClass = "bg-red-600 text-white shadow-red-600/50";
@@ -624,8 +663,15 @@ export default function HomePage() {
                   return (
                     <div
                       key={slot}
-                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${isFree && !isExpired ? "cursor-pointer" : "cursor-default"}`}
-                      onClick={() => isFree && !isExpired && toggleSlotSelection(slot)}
+                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${isFree && !isExpired ? "cursor-pointer" : isAcademic ? "cursor-pointer" : "cursor-default"}`}
+                      onClick={() => {
+                        if (isAcademic) {
+                          setSelectedAcademicDetails(status.details);
+                          setShowAcademicModal(true);
+                        } else if (isFree && !isExpired) {
+                          toggleSlotSelection(slot);
+                        }
+                      }}
                     >
                       <div className="text-sm flex items-center justify-center gap-2">
                         {isFree && !isExpired && (
@@ -638,8 +684,19 @@ export default function HomePage() {
                         )}
                         {slot}
                       </div>
-                      <div className="text-xs mt-2 font-normal">{status}</div>
+                      <div className="text-xs mt-2 font-normal">
+                        {isAcademic ? (
+                          <>
+                            <div>{statusText}</div>
+                            <div className="mt-1 text-purple-200">{status.details.subject}</div>
+                            <div className="text-purple-200">{status.details.year} - {status.details.section}</div>
+                          </>
+                        ) : (
+                          statusText
+                        )}
+                      </div>
                       {isSelected && <div className="text-xs mt-1">✓ Selected</div>}
+                      {isAcademic && <div className="text-xs mt-1">🔒 Click for details</div>}
                     </div>
                   );
                 })}
@@ -779,6 +836,74 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Academic Class Details Modal */}
+      {showAcademicModal && selectedAcademicDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1F2937] rounded-lg p-6 max-w-md w-full border-2 border-purple-600 shadow-2xl shadow-purple-600/50">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-bold text-white">Academic Class Details</h2>
+              <button
+                onClick={() => {
+                  setShowAcademicModal(false);
+                  setSelectedAcademicDetails(null);
+                }}
+                className="text-gray-400 hover:text-white transition text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs mb-1">Subject</p>
+                <p className="text-white font-bold text-lg">{selectedAcademicDetails.subject}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-xs mb-1">Type</p>
+                  <p className="text-white font-semibold">{selectedAcademicDetails.type}</p>
+                </div>
+                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-xs mb-1">Room</p>
+                  <p className="text-white font-semibold">{selectedAcademicDetails.room}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-xs mb-1">Year</p>
+                  <p className="text-white font-semibold">{selectedAcademicDetails.year}</p>
+                </div>
+                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-xs mb-1">Section</p>
+                  <p className="text-white font-semibold">{selectedAcademicDetails.section}</p>
+                </div>
+              </div>
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs mb-1">Faculty</p>
+                <p className="text-white font-semibold">{selectedAcademicDetails.faculty}</p>
+              </div>
+              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs mb-1">Time Slot</p>
+                <p className="text-white font-semibold">{selectedAcademicDetails.slot}</p>
+              </div>
+              <div className="bg-purple-900/30 border border-purple-600/50 p-4 rounded-lg">
+                <p className="text-purple-300 text-sm">
+                  🔒 This slot is blocked for academic purposes and cannot be booked.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowAcademicModal(false);
+                setSelectedAcademicDetails(null);
+              }}
+              className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
