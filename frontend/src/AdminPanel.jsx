@@ -51,15 +51,22 @@ function isBookingExpired(booking) {
     const lastSlot = slots[slots.length - 1];
     const endTimeStr = lastSlot.split(' - ')[1] || lastSlot.split('–')[1];
     
-    // Parse end time
+    // Parse end time (handle various formats)
     let endHour, endMinute;
-    if (endTimeStr.includes(':')) {
-      [endHour, endMinute] = endTimeStr.split(':').map(t => parseInt(t.trim()));
+    const cleanEndTime = endTimeStr.trim();
+    
+    if (cleanEndTime.includes(':')) {
+      const parts = cleanEndTime.split(':');
+      endHour = parseInt(parts[0]);
+      endMinute = parseInt(parts[1]);
     } else {
-      // Handle formats like "1:40" or "2:40"
-      const timeParts = endTimeStr.trim().split(':');
-      endHour = parseInt(timeParts[0]);
-      endMinute = timeParts[1] ? parseInt(timeParts[1]) : 0;
+      endHour = parseInt(cleanEndTime);
+      endMinute = 0;
+    }
+    
+    // Handle PM times (afternoon slots)
+    if (endHour < 9 && !cleanEndTime.toLowerCase().includes('am')) {
+      endHour += 12;
     }
     
     // Convert current time to minutes since midnight
@@ -321,13 +328,16 @@ export default function AdminPanel() {
                           </div>
                         </>
                       )}
-                      {booking.status === 'Approved' && (
+                      {booking.status === 'Approved' && !isBookingExpired(booking) && (
                         <button
                           onClick={() => updateStatus(booking._id, 'Rejected', 'Manual cancellation')}
                           className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                         >
                           Cancel
                         </button>
+                      )}
+                      {booking.status === 'Approved' && isBookingExpired(booking) && (
+                        <span className="text-gray-500 text-sm italic">Completed</span>
                       )}
                     </td>
                   </tr>

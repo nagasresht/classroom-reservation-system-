@@ -22,35 +22,59 @@ router.post('/register', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
-    // Generate OTP
-    const otp = generateOTP();
-    const otpExpiry = Date.now() + 600000; // 10 minutes
+    // Check if user is admin (email ends with @admin.com)
+    const isAdmin = email.toLowerCase().endsWith('@admin.com');
 
-    // Create user with OTP (not verified yet)
-    const newUser = new User({ 
-      name, 
-      email, 
-      password, 
-      department, 
-      staffNumber, 
-      phone,
-      isVerified: false,
-      otp,
-      otpExpiry
-    });
-    await newUser.save();
+    if (isAdmin) {
+      // Admin users - auto-verify, no OTP required
+      const newUser = new User({ 
+        name, 
+        email, 
+        password, 
+        department, 
+        staffNumber, 
+        phone,
+        isVerified: true, // Auto-verify admin
+        otp: null,
+        otpExpiry: null
+      });
+      await newUser.save();
 
-    // Send OTP email
-    const emailSent = await sendOTPEmail(email, name, otp);
+      res.status(201).json({ 
+        message: 'Admin registration successful! You can now login.',
+        isAdmin: true,
+        skipOTP: true
+      });
+    } else {
+      // Regular users - require OTP verification
+      const otp = generateOTP();
+      const otpExpiry = Date.now() + 600000; // 10 minutes
 
-    if (!emailSent) {
-      return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+      const newUser = new User({ 
+        name, 
+        email, 
+        password, 
+        department, 
+        staffNumber, 
+        phone,
+        isVerified: false,
+        otp,
+        otpExpiry
+      });
+      await newUser.save();
+
+      // Send OTP email
+      const emailSent = await sendOTPEmail(email, name, otp);
+
+      if (!emailSent) {
+        return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+      }
+
+      res.status(201).json({ 
+        message: 'Registration successful! Please check your email for OTP verification.',
+        email: email // Send email back so frontend knows where OTP was sent
+      });
     }
-
-    res.status(201).json({ 
-      message: 'Registration successful! Please check your email for OTP verification.',
-      email: email // Send email back so frontend knows where OTP was sent
-    });
 
   } catch (err) {
     console.error('Registration error:', err);

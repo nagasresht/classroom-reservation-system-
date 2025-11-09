@@ -17,6 +17,85 @@ export default function AdminTimetable() {
     classSlot: '' // For class: single hour slot
   });
   const [message, setMessage] = useState('');
+  const [facultySearch, setFacultySearch] = useState('');
+  const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
+
+
+  // Faculty list
+  const facultyList = [
+    "Dr. Vadlana Baby",
+    "Dr. Cherukuri Kiran Mai",
+    "Dr. Sabbineni Nagini",
+    "Dr. Bolneni Venkata Kiranmayee",
+    "Dr. Gollapudi Rameshchandra",
+    "Dr. Puligundla Neelakantan",
+    "Dr. Myneni Madhu Bala",
+    "Dr. Malige Gangappa",
+    "Dr. Pasupuleti Venkata Siva Kumar",
+    "Dr. Annapu Reddy Brahmananda Reddy",
+    "Dr. Deepak Sukheja",
+    "Dr.Thayyaba Khatoon MD",
+    "Dr. Anjusha Nitin Pimpalshende",
+    "Dr. Motupalli Ravi Kanth",
+    "Dr. Nekkanti Venkata Sailaja",
+    "Dr. Desapandya Naga Vasundara",
+    "Dr. Vasavi Ravuri",
+    "Dr. Redrowthu Vijaya Saraswathi",
+    "Dr. Kanakala Srinivas",
+    "Mrs. Alli Madhavi",
+    "Dr Pathi Radhika",
+    "Mr.Thuraka Gnana Prakash",
+    "Mrs.Somavarapu Jahnavi",
+    "Mrs.Neerukonda Lakshmi Kalyani",
+    "Dr. N. Sandeep Chaitanya",
+    "Mrs. Nyaramneni Sarika",
+    "Dr. Potluri Tejaswi",
+    "Dr. Pokuri Bharath Kumar Chowdary",
+    "Mr. Peddarapu Ramakrishna Chowdary",
+    "Dr. Kunka Bheemalingappa",
+    "Mrs.Lingineni Indira",
+    "Dr. Chalumuru Suresh",
+    "Dr Kriti Ohri",
+    "Dr. Venkata Ramana Kaneti",
+    "Mrs.K Jhansi Lakshmi Bai",
+    "Mr. Mannepalli Venkata Krishna Rao",
+    "Mr.Tummala Nagarjuna",
+    "Mrs.Siripurapu Nyemeesha",
+    "Mrs.Putti Jyothi",
+    "Mrs. Bhagya Rekha Konkepudi",
+    "Shaik Abdul Hameed",
+    "Mrs.Pabba Prasanna",
+    "Mrs.Gopisetti Laxmi Deepthi",
+    "Mrs.Kodali Hari priya",
+    "Mrs.Sadula Sudeshna",
+    "Mr. Pinapati Sudheer Benarji",
+    "Mr.Indurthi Ravindra Kumar",
+    "Dr.Manchikatla Srikanth",
+    "Mr.Perunalla Praveen",
+    "Mrs.Chappidi Sandhya Rani",
+    "Mrs.Vijaya Bhasakara Reddy V",
+    "Mr.Ch. Suresh Kumar Raju",
+    "Mr.P. Rajesh",
+    "Sk. Saddam Hussain",
+    "Mr.M. Ram Babu",
+    "Mrs.V. Dhanalakshmi",
+    "Mrs.A. Katyayani",
+    "Mr. Palakurthi Ramesh",
+    "Dr. Karumuri Sri Rama Murthy",
+    "Mr.Thirupathi Nanuvala",
+    "Mr.Karnam Akhil",
+    "Ms.Smapath Alankritha",
+    "Mrs.Swathi Kadari",
+    "Mr.N. Praveen Kumar",
+    "Mrs.Abbi Sandhya Rani",
+    "Mrs.Shetkar Ambika",
+    "Mr.Somanadha Satyadev Bulusu",
+    "Mrs.Srijita Majumder",
+    "Mrs.G. Dhruva Manasa",
+    "Dr. A. V. S. Swetha",
+    "Inayath Sana",
+    "Malle Sandeep"
+  ];
 
   // Time slots for different years
   const firstYearSlots = [
@@ -384,17 +463,52 @@ export default function AdminTimetable() {
             {/* Step 6: Select Faculty */}
             {step === 6 && (
               <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">Step 6: Enter Faculty Name</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Step 6: Select Faculty</h2>
                 
-                <div className="mb-6">
+                <div className="mb-6 relative">
                   <label className="block text-sm font-semibold mb-2">Faculty Name</label>
                   <input
                     type="text"
-                    value={formData.faculty}
-                    onChange={(e) => handleChange('faculty', e.target.value)}
+                    value={formData.faculty || facultySearch}
+                    onChange={(e) => {
+                      setFacultySearch(e.target.value);
+                      handleChange('faculty', ''); // Clear selection when typing
+                      setShowFacultyDropdown(true);
+                    }}
+                    onFocus={() => setShowFacultyDropdown(true)}
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                    placeholder="e.g., Dr. John Smith"
+                    placeholder="Type to search faculty..."
                   />
+                  
+                  {/* Dropdown list */}
+                  {showFacultyDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {facultyList
+                        .filter(faculty => 
+                          faculty.toLowerCase().includes((formData.faculty || facultySearch).toLowerCase())
+                        )
+                        .map((faculty, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              handleChange('faculty', faculty);
+                              setFacultySearch('');
+                              setShowFacultyDropdown(false);
+                            }}
+                            className="px-4 py-2 hover:bg-purple-100 cursor-pointer border-b border-gray-200 last:border-b-0"
+                          >
+                            {faculty}
+                          </div>
+                        ))}
+                      {facultyList.filter(faculty => 
+                        faculty.toLowerCase().includes((formData.faculty || facultySearch).toLowerCase())
+                      ).length === 0 && (
+                        <div className="px-4 py-2 text-gray-500 text-center">
+                          No faculty found
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Summary */}

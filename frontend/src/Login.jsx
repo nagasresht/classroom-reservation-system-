@@ -29,7 +29,10 @@ export default function Login() {
       }
       
       localStorage.setItem('user', JSON.stringify(data));
-      navigate(data.email === 'admin@admin.com' ? '/admin-dashboard' : '/dashboard');
+      
+      // Check if email ends with @admin.com
+      const isAdmin = data.email.toLowerCase().endsWith('@admin.com');
+      navigate(isAdmin ? '/admin-dashboard' : '/dashboard');
    } catch {
       setError('Server error. Try again later.');
     }

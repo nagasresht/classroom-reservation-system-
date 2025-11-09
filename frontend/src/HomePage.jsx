@@ -3,50 +3,113 @@ import { FaCalendarAlt, FaUser, FaSignOutAlt, FaDoorOpen, FaFlask, FaChevronDown
 import NotificationBell from './NotificationBell';
 
 const allRooms = [
-  { id: 1, name: "Peb 10", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 2, name: "Peb 11", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 3, name: "Peb 12", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 4, name: "Peb 13", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 5, name: "Peb 14", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 6, name: "Peb 15", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 7, name: "B 407", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 8, name: "B 408", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 9, name: "A 103", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 10, name: "B 312", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 11, name: "B 313", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 12, name: "NB 201", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 13, name: "NB 202", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 14, name: "NB 203", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 15, name: "NB 204", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 16, name: "NB 205", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 17, name: "A 117", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 18, name: "A 118", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 19, name: "A 108", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 20, name: "P 403", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 21, name: "A007", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 22, name: "B 314", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 23, name: "B 315", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 24, name: "B 316", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 25, name: "B 317", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 26, name: "P 410", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 27, name: "P403", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 28, name: "A109", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 29, name: "A 111", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 30, name: "A 113", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 31, name: "D 518", type: "Lab", color: "bg-[#60A5FA]/20" }
+  // Theory/Class Rooms
+  { id: 1, name: "E003", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 2, name: "E004", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 3, name: "E005", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 4, name: "E006", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 5, name: "E012 & E013", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 6, name: "E032", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 7, name: "E033", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 8, name: "E034 (Audi)", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 9, name: "E035", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 10, name: "E036", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 11, name: "E037", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 12, name: "E038", type: "Theory", color: "bg-[#3B82F6]/20" },
+  
+  // Labs
+  { id: 13, name: "E001", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 14, name: "E002", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 15, name: "E014 & E015", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 16, name: "E028", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 17, name: "E029", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 18, name: "E030 & E031", type: "Lab", color: "bg-[#60A5FA]/20" }
 ];
 
 const timeSlots = [
-  "9:00 - 10:00",
-  "10:00 - 11:00",
-  "11:00 - 12:00",
-  "12:00 - 1:40",
-  "1:40 - 2:40",
-  "2:40 - 3:40",
-  "3:40 - 4:40"
+  "9:00-10:00",
+  "10:00-11:00",
+  "11:00-12:00",
+  "12:00-1:40",
+  "1:40-2:40",
+  "2:40-3:40",
+  "3:40-4:40"
 ];
 
-const facultyList = Array.from({ length: 15 }, (_, i) => `Faculty ${i + 1}`);
+const facultyList = [
+  "Dr. Vadlana Baby",
+  "Dr. Cherukuri Kiran Mai",
+  "Dr. Sabbineni Nagini",
+  "Dr. Bolneni Venkata Kiranmayee",
+  "Dr. Gollapudi Rameshchandra",
+  "Dr. Puligundla Neelakantan",
+  "Dr. Myneni Madhu Bala",
+  "Dr. Malige Gangappa",
+  "Dr. Pasupuleti Venkata Siva Kumar",
+  "Dr. Annapu Reddy Brahmananda Reddy",
+  "Dr. Deepak Sukheja",
+  "Dr.Thayyaba Khatoon MD",
+  "Dr. Anjusha Nitin Pimpalshende",
+  "Dr. Motupalli Ravi Kanth",
+  "Dr. Nekkanti Venkata Sailaja",
+  "Dr. Desapandya Naga Vasundara",
+  "Dr. Vasavi Ravuri",
+  "Dr. Redrowthu Vijaya Saraswathi",
+  "Dr. Kanakala Srinivas",
+  "Mrs. Alli Madhavi",
+  "Dr Pathi Radhika",
+  "Mr.Thuraka Gnana Prakash",
+  "Mrs.Somavarapu Jahnavi",
+  "Mrs.Neerukonda Lakshmi Kalyani",
+  "Dr. N. Sandeep Chaitanya",
+  "Mrs. Nyaramneni Sarika",
+  "Dr. Potluri Tejaswi",
+  "Dr. Pokuri Bharath Kumar Chowdary",
+  "Mr. Peddarapu Ramakrishna Chowdary",
+  "Dr. Kunka Bheemalingappa",
+  "Mrs.Lingineni Indira",
+  "Dr. Chalumuru Suresh",
+  "Dr Kriti Ohri",
+  "Dr. Venkata Ramana Kaneti",
+  "Mrs.K Jhansi Lakshmi Bai",
+  "Mr. Mannepalli Venkata Krishna Rao",
+  "Mr.Tummala Nagarjuna",
+  "Mrs.Siripurapu Nyemeesha",
+  "Mrs.Putti Jyothi",
+  "Mrs. Bhagya Rekha Konkepudi",
+  "Shaik Abdul Hameed",
+  "Mrs.Pabba Prasanna",
+  "Mrs.Gopisetti Laxmi Deepthi",
+  "Mrs.Kodali Hari priya",
+  "Mrs.Sadula Sudeshna",
+  "Mr. Pinapati Sudheer Benarji",
+  "Mr.Indurthi Ravindra Kumar",
+  "Dr.Manchikatla Srikanth",
+  "Mr.Perunalla Praveen",
+  "Mrs.Chappidi Sandhya Rani",
+  "Mrs.Vijaya Bhasakara Reddy V",
+  "Mr.Ch. Suresh Kumar Raju",
+  "Mr.P. Rajesh",
+  "Sk. Saddam Hussain",
+  "Mr.M. Ram Babu",
+  "Mrs.V. Dhanalakshmi",
+  "Mrs.A. Katyayani",
+  "Mr. Palakurthi Ramesh",
+  "Dr. Karumuri Sri Rama Murthy",
+  "Mr.Thirupathi Nanuvala",
+  "Mr.Karnam Akhil",
+  "Ms.Smapath Alankritha",
+  "Mrs.Swathi Kadari",
+  "Mr.N. Praveen Kumar",
+  "Mrs.Abbi Sandhya Rani",
+  "Mrs.Shetkar Ambika",
+  "Mr.Somanadha Satyadev Bulusu",
+  "Mrs.Srijita Majumder",
+  "Mrs.G. Dhruva Manasa",
+  "Dr. A. V. S. Swetha",
+  "Inayath Sana",
+  "Malle Sandeep"
+];
 
 export default function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -58,8 +121,11 @@ export default function HomePage() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showBookingHistory, setShowBookingHistory] = useState(false);
+  const [facultySearch, setFacultySearch] = useState('');
+  const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
 
   const dropdownRef = useRef(null);
+  const facultyDropdownRef = useRef(null);
 
   const [bookings, setBookings] = useState([]);
   const [academicSlots, setAcademicSlots] = useState([]);
@@ -87,6 +153,9 @@ export default function HomePage() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowUserDropdown(false);
       }
+      if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(event.target)) {
+        setShowFacultyDropdown(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -101,14 +170,65 @@ export default function HomePage() {
     return bookings.filter(b => b.email === user.email);
   };
 
+  // Helper function to check if a time slot has expired
+  const isSlotExpired = (slot) => {
+    const today = new Date();
+    const selectedDateObj = new Date(selectedDate);
+    
+    // Reset time to midnight for date comparison
+    today.setHours(0, 0, 0, 0);
+    selectedDateObj.setHours(0, 0, 0, 0);
+    
+    // If selected date is in the past, all slots are expired
+    if (selectedDateObj < today) {
+      return true;
+    }
+    
+    // If selected date is today, check the slot time
+    if (selectedDateObj.getTime() === today.getTime()) {
+      const currentTime = new Date();
+      const currentHour = currentTime.getHours();
+      const currentMinute = currentTime.getMinutes();
+      
+      // Parse the end time of the slot (handle both "9:00-10:00" and "9:00 - 10:00" formats)
+      const endTimeStr = slot.split('-')[1];
+      const cleanEndTime = endTimeStr.trim();
+      
+      let endHour, endMinute;
+      if (cleanEndTime.includes(':')) {
+        const parts = cleanEndTime.split(':');
+        endHour = parseInt(parts[0]);
+        endMinute = parseInt(parts[1]);
+      } else {
+        endHour = parseInt(cleanEndTime);
+        endMinute = 0;
+      }
+      
+      // Handle PM times (afternoon slots)
+      if (endHour < 9 && !cleanEndTime.toLowerCase().includes('am')) {
+        endHour += 12;
+      }
+      
+      // Convert to minutes for comparison
+      const currentMinutes = currentHour * 60 + currentMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      
+      // If current time is past the end time, slot is expired
+      return currentMinutes >= endMinutes;
+    }
+    
+    // Future dates - not expired
+    return false;
+  };
+
   const formatSlotsDisplay = (slots) => {
     if (!slots || slots.length === 0) return '';
     if (slots.length === 1) return slots[0];
     
     const sortedSlots = [...slots].sort();
     const timeSlots = [
-      "9:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 1:40",
-      "1:40 - 2:40", "2:40 - 3:40", "3:40 - 4:40"
+      "9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:40",
+      "1:40-2:40", "2:40-3:40", "3:40-4:40"
     ];
     
     const indices = sortedSlots.map(slot => timeSlots.indexOf(slot));
@@ -124,6 +244,11 @@ export default function HomePage() {
   };
 
   const getSlotStatus = (slot) => {
+    // Check if slot has expired
+    if (isSlotExpired(slot)) {
+      return "Expired";
+    }
+
     const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
     const academicBlocked = academicSlots.some(entry =>
       entry.day === dayOfWeek &&
@@ -236,7 +361,7 @@ export default function HomePage() {
           );
 
           const label = found
-            ? `${found.type === 'Lab' ? 'Teaching Lab' : 'Teaching Class'} (${found.subject})`
+            ? `${found.type} for ${found.year} ${found.section} - ${found.subject}`
             : "Free";
 
           return (
@@ -376,15 +501,41 @@ export default function HomePage() {
       {/* Faculty View */}
       {activeTab === "Faculty" ? (
         <div className="max-w-2xl mx-auto">
-          <select
-            value={selectedFaculty}
-            onChange={(e) => setSelectedFaculty(e.target.value)}
-            className="mb-6 w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition"
-          >
-            {facultyList.map((name, i) => (
-              <option key={i} value={name}>{name}</option>
-            ))}
-          </select>
+          <div className="relative mb-6" ref={facultyDropdownRef}>
+            <input
+              type="text"
+              placeholder="Search faculty..."
+              value={showFacultyDropdown ? facultySearch : selectedFaculty}
+              onChange={(e) => {
+                setFacultySearch(e.target.value);
+                setShowFacultyDropdown(true);
+              }}
+              onFocus={() => {
+                setFacultySearch('');
+                setShowFacultyDropdown(true);
+              }}
+              className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition"
+            />
+            {showFacultyDropdown && (
+              <div className="absolute z-10 w-full mt-1 bg-[#1F2937] border border-[#374151] rounded-lg max-h-60 overflow-y-auto shadow-lg">
+                {facultyList
+                  .filter(f => f.toLowerCase().includes(facultySearch.toLowerCase()))
+                  .map((faculty, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setSelectedFaculty(faculty);
+                        setShowFacultyDropdown(false);
+                        setFacultySearch('');
+                      }}
+                      className="px-4 py-2 hover:bg-[#374151] cursor-pointer text-white transition"
+                    >
+                      {faculty}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
           {renderFacultyView()}
         </div>
       ) : (
@@ -451,9 +602,12 @@ export default function HomePage() {
                   const status = getSlotStatus(slot);
                   const isSelected = selectedSlots.includes(slot);
                   const isFree = status === "Free";
+                  const isExpired = status === "Expired";
                   
                   let bgClass = "";
-                  if (isSelected && isFree) {
+                  if (isExpired) {
+                    bgClass = "bg-[#6B7280] text-[#D1D5DB] cursor-not-allowed opacity-60";
+                  } else if (isSelected && isFree) {
                     bgClass = "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50 ring-4 ring-[#60A5FA] scale-105";
                   } else if (isFree) {
                     bgClass = "bg-[#1F2937] hover:bg-[#374151] text-white border-2 border-[#3B82F6] hover:border-[#60A5FA]";
@@ -470,11 +624,11 @@ export default function HomePage() {
                   return (
                     <div
                       key={slot}
-                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${isFree ? "cursor-pointer" : "cursor-default"}`}
-                      onClick={() => isFree && toggleSlotSelection(slot)}
+                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${isFree && !isExpired ? "cursor-pointer" : "cursor-default"}`}
+                      onClick={() => isFree && !isExpired && toggleSlotSelection(slot)}
                     >
                       <div className="text-sm flex items-center justify-center gap-2">
-                        {isFree && (
+                        {isFree && !isExpired && (
                           <input
                             type="checkbox"
                             checked={isSelected}

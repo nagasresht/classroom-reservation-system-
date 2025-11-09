@@ -34,9 +34,15 @@ export default function Register() {
         return;
       }
 
-      // Redirect to OTP verification page
-      alert(data.message);
-      navigate('/verify-otp', { state: { email: data.email } });
+      // Check if admin (skip OTP)
+      if (data.skipOTP) {
+        alert(data.message);
+        navigate('/'); // Redirect to login for admin
+      } else {
+        // Regular user - redirect to OTP verification
+        alert(data.message);
+        navigate('/verify-otp', { state: { email: data.email } });
+      }
     } catch (err) {
       setError('Server error. Try again later.');
     }
