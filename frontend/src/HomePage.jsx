@@ -1,6 +1,15 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { FaCalendarAlt, FaUser, FaSignOutAlt, FaDoorOpen, FaFlask, FaChevronDown, FaUserCircle, FaHistory } from 'react-icons/fa';
-import NotificationBell from './NotificationBell';
+import React, { useEffect, useState, useRef } from "react";
+import {
+  FaCalendarAlt,
+  FaUser,
+  FaSignOutAlt,
+  FaDoorOpen,
+  FaFlask,
+  FaChevronDown,
+  FaUserCircle,
+  FaHistory,
+} from "react-icons/fa";
+import NotificationBell from "./NotificationBell";
 
 const allRooms = [
   // Theory/Class Rooms
@@ -16,14 +25,14 @@ const allRooms = [
   { id: 10, name: "E036", type: "Theory", color: "bg-[#3B82F6]/20" },
   { id: 11, name: "E037", type: "Theory", color: "bg-[#3B82F6]/20" },
   { id: 12, name: "E038", type: "Theory", color: "bg-[#3B82F6]/20" },
-  
+
   // Labs
   { id: 13, name: "E001", type: "Lab", color: "bg-[#60A5FA]/20" },
   { id: 14, name: "E002", type: "Lab", color: "bg-[#60A5FA]/20" },
   { id: 15, name: "E014 & E015", type: "Lab", color: "bg-[#60A5FA]/20" },
   { id: 16, name: "E028", type: "Lab", color: "bg-[#60A5FA]/20" },
   { id: 17, name: "E029", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 18, name: "E030 & E031", type: "Lab", color: "bg-[#60A5FA]/20" }
+  { id: 18, name: "E030 & E031", type: "Lab", color: "bg-[#60A5FA]/20" },
 ];
 
 const timeSlots = [
@@ -33,7 +42,7 @@ const timeSlots = [
   "12:00-1:40",
   "1:40-2:40",
   "2:40-3:40",
-  "3:40-4:40"
+  "3:40-4:40",
 ];
 
 const facultyList = [
@@ -108,18 +117,18 @@ const facultyList = [
   "Mrs.G. Dhruva Manasa",
   "Dr. A. V. S. Swetha",
   "Inayath Sana",
-  "Malle Sandeep"
+  "Malle Sandeep",
 ];
 
 export default function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
-  
+
   // Get today's date in consistent format (YYYY-MM-DD in local timezone)
   const getTodayDate = () => {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -131,11 +140,11 @@ export default function HomePage() {
       now.setDate(now.getDate() + 1);
     }
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
-  
+
   const [selectedDate, setSelectedDate] = useState(getInitialDate());
   const [activeTab, setActiveTab] = useState("Rooms");
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -144,7 +153,7 @@ export default function HomePage() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showBookingHistory, setShowBookingHistory] = useState(false);
-  const [facultySearch, setFacultySearch] = useState('');
+  const [facultySearch, setFacultySearch] = useState("");
   const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
   const [showAcademicModal, setShowAcademicModal] = useState(false);
   const [selectedAcademicDetails, setSelectedAcademicDetails] = useState(null);
@@ -178,12 +187,15 @@ export default function HomePage() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowUserDropdown(false);
       }
-      if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(event.target)) {
+      if (
+        facultyDropdownRef.current &&
+        !facultyDropdownRef.current.contains(event.target)
+      ) {
         setShowFacultyDropdown(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -192,80 +204,87 @@ export default function HomePage() {
   };
 
   const getUserBookings = () => {
-    return bookings.filter(b => b.email === user.email);
+    return bookings.filter((b) => b.email === user.email);
   };
 
   // Helper function to check if a time slot has expired
   const isSlotExpired = (slot) => {
     const today = new Date();
     const selectedDateObj = new Date(selectedDate);
-    
+
     // Reset time to midnight for date comparison
     today.setHours(0, 0, 0, 0);
     selectedDateObj.setHours(0, 0, 0, 0);
-    
+
     // If selected date is in the past, all slots are expired
     if (selectedDateObj < today) {
       return true;
     }
-    
+
     // If selected date is today, check the slot time
     if (selectedDateObj.getTime() === today.getTime()) {
       const currentTime = new Date();
       const currentHour = currentTime.getHours();
       const currentMinute = currentTime.getMinutes();
-      
+
       // Parse the end time of the slot (handle both "9:00-10:00" and "9:00 - 10:00" formats)
-      const endTimeStr = slot.split('-')[1];
+      const endTimeStr = slot.split("-")[1];
       const cleanEndTime = endTimeStr.trim();
-      
+
       let endHour, endMinute;
-      if (cleanEndTime.includes(':')) {
-        const parts = cleanEndTime.split(':');
+      if (cleanEndTime.includes(":")) {
+        const parts = cleanEndTime.split(":");
         endHour = parseInt(parts[0]);
         endMinute = parseInt(parts[1]);
       } else {
         endHour = parseInt(cleanEndTime);
         endMinute = 0;
       }
-      
+
       // Handle PM times (afternoon slots)
-      if (endHour < 9 && !cleanEndTime.toLowerCase().includes('am')) {
+      if (endHour < 9 && !cleanEndTime.toLowerCase().includes("am")) {
         endHour += 12;
       }
-      
+
       // Convert to minutes for comparison
       const currentMinutes = currentHour * 60 + currentMinute;
       const endMinutes = endHour * 60 + endMinute;
-      
+
       // If current time is past the end time, slot is expired
       return currentMinutes >= endMinutes;
     }
-    
+
     // Future dates - not expired
     return false;
   };
 
   const formatSlotsDisplay = (slots) => {
-    if (!slots || slots.length === 0) return '';
+    if (!slots || slots.length === 0) return "";
     if (slots.length === 1) return slots[0];
-    
+
     const sortedSlots = [...slots].sort();
     const timeSlots = [
-      "9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:40",
-      "1:40-2:40", "2:40-3:40", "3:40-4:40"
+      "9:00-10:00",
+      "10:00-11:00",
+      "11:00-12:00",
+      "12:00-1:40",
+      "1:40-2:40",
+      "2:40-3:40",
+      "3:40-4:40",
     ];
-    
-    const indices = sortedSlots.map(slot => timeSlots.indexOf(slot));
-    const allConsecutive = indices.every((val, i, arr) => i === 0 || val === arr[i - 1] + 1);
-    
+
+    const indices = sortedSlots.map((slot) => timeSlots.indexOf(slot));
+    const allConsecutive = indices.every(
+      (val, i, arr) => i === 0 || val === arr[i - 1] + 1
+    );
+
     if (allConsecutive && sortedSlots.length > 1) {
-      const startTime = sortedSlots[0].split(' - ')[0];
-      const endTime = sortedSlots[sortedSlots.length - 1].split(' - ')[1];
+      const startTime = sortedSlots[0].split(" - ")[0];
+      const endTime = sortedSlots[sortedSlots.length - 1].split(" - ")[1];
       return `${startTime} - ${endTime}`;
     }
-    
-    return sortedSlots.join(', ');
+
+    return sortedSlots.join(", ");
   };
 
   const getSlotStatus = (slot) => {
@@ -274,35 +293,44 @@ export default function HomePage() {
       return "Expired";
     }
 
-    const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-    const academicEntry = academicSlots.find(entry =>
-      entry.day === dayOfWeek &&
-      entry.slot === slot &&
-      entry.room === selectedRoom?.name
+    const dayOfWeek = new Date(selectedDate).toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+    const academicEntry = academicSlots.find(
+      (entry) =>
+        entry.day === dayOfWeek &&
+        entry.slot === slot &&
+        entry.room === selectedRoom?.name
     );
     if (academicEntry) {
       return {
         type: "Academic",
-        details: academicEntry
+        details: academicEntry,
       };
     }
 
     // Updated to check slots array instead of single slot
     const slotBookings = bookings.filter(
-      (b) => b.slots?.includes(slot) && b.room === selectedRoom?.name && b.date === selectedDate
+      (b) =>
+        b.slots?.includes(slot) &&
+        b.room === selectedRoom?.name &&
+        b.date === selectedDate
     );
-    const approved = slotBookings.find(b => b.status === "Approved");
+    const approved = slotBookings.find((b) => b.status === "Approved");
 
     if (!slotBookings.length) return "Free";
-    if (approved) return approved.email === user.email ? "Approved" : `Booked by ${approved.facultyName}`;
+    if (approved)
+      return approved.email === user.email
+        ? "Approved"
+        : `Booked by ${approved.facultyName}`;
     return "Pending";
   };
 
   // NEW: Toggle slot selection
   const toggleSlotSelection = (slot) => {
-    setSelectedSlots(prev => {
+    setSelectedSlots((prev) => {
       if (prev.includes(slot)) {
-        return prev.filter(s => s !== slot);
+        return prev.filter((s) => s !== slot);
       } else {
         return [...prev, slot];
       }
@@ -311,31 +339,37 @@ export default function HomePage() {
 
   // NEW: Calculate available slots for a room on selected date
   const getAvailableSlotCount = (roomName) => {
-    const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-    
+    const dayOfWeek = new Date(selectedDate).toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
     let availableCount = 0;
-    
-    timeSlots.forEach(slot => {
+
+    timeSlots.forEach((slot) => {
       // Check if slot is blocked by academic calendar
-      const academicBlocked = academicSlots.some(entry =>
-        entry.day === dayOfWeek &&
-        entry.slot === slot &&
-        entry.room === roomName
+      const academicBlocked = academicSlots.some(
+        (entry) =>
+          entry.day === dayOfWeek &&
+          entry.slot === slot &&
+          entry.room === roomName
       );
-      
+
       if (academicBlocked) return; // Skip this slot
-      
+
       // Check if slot is approved by someone
       const slotBookings = bookings.filter(
-        (b) => b.slots?.includes(slot) && b.room === roomName && b.date === selectedDate
+        (b) =>
+          b.slots?.includes(slot) &&
+          b.room === roomName &&
+          b.date === selectedDate
       );
-      const approved = slotBookings.find(b => b.status === "Approved");
-      
+      const approved = slotBookings.find((b) => b.status === "Approved");
+
       if (!approved) {
         availableCount++; // This slot is free
       }
     });
-    
+
     return availableCount;
   };
 
@@ -358,15 +392,15 @@ export default function HomePage() {
       facultyName: user.name,
       email: user.email,
       department: user.department,
-      staffNumber: user.staffNumber
+      staffNumber: user.staffNumber,
     };
 
-    console.log('📤 Sending booking request:', booking);
+    console.log("📤 Sending booking request:", booking);
 
     const res = await fetch("http://localhost:5000/api/book", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(booking)
+      body: JSON.stringify(booking),
     });
 
     if (res.ok) {
@@ -380,23 +414,35 @@ export default function HomePage() {
   };
 
   const renderFacultyView = () => {
-    const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+    const dayOfWeek = new Date(selectedDate).toLocaleDateString("en-US", {
+      weekday: "long",
+    });
     return (
       <div className="mt-6 space-y-3">
-        {timeSlots.map(slot => {
-          const found = academicSlots.find(entry =>
-            entry.day === dayOfWeek &&
-            entry.slot === slot &&
-            entry.faculty === selectedFaculty
+        {timeSlots.map((slot) => {
+          const found = academicSlots.find(
+            (entry) =>
+              entry.day === dayOfWeek &&
+              entry.slot === slot &&
+              entry.faculty === selectedFaculty
           );
 
           const label = found
-            ? `${found.type} for ${found.year} ${found.section} - ${found.subject}`
+            ? `${found.type} for ${found.year} ${
+                found.branch ? found.branch + " " : ""
+              }${found.section} - ${found.subject}`
             : "Free";
 
           return (
-            <div key={slot} className={`p-4 rounded-lg border flex justify-between items-center transition
-              ${label === "Free" ? 'bg-[#1F2937] border-[#374151] text-[#9CA3AF]' : 'bg-[#3B82F6] border-[#3B82F6] text-white shadow-lg shadow-[#3B82F6]/30'}`}>
+            <div
+              key={slot}
+              className={`p-4 rounded-lg border flex justify-between items-center transition
+              ${
+                label === "Free"
+                  ? "bg-[#1F2937] border-[#374151] text-[#9CA3AF]"
+                  : "bg-[#3B82F6] border-[#3B82F6] text-white shadow-lg shadow-[#3B82F6]/30"
+              }`}
+            >
               <span className="font-semibold">{slot}</span>
               <span className="text-sm">{label}</span>
             </div>
@@ -406,7 +452,7 @@ export default function HomePage() {
     );
   };
 
-  const filteredRooms = allRooms.filter(room => {
+  const filteredRooms = allRooms.filter((room) => {
     if (activeTab === "Rooms") return room.type === "Theory";
     if (activeTab === "Labs") return room.type === "Lab";
     return false;
@@ -416,16 +462,21 @@ export default function HomePage() {
     const date = new Date();
     date.setDate(date.getDate() + i);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     const dateValue = `${year}-${month}-${day}`;
-    
+
     return {
-      label: date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+      label: date.toLocaleDateString("en-US", {
+        weekday: "short",
+        day: "numeric",
+      }),
       value: dateValue,
-      dayOfWeek: date.getDay()
+      dayOfWeek: date.getDay(),
     };
-  }).filter(day => day.dayOfWeek !== 0).slice(0, 7); // Filter out Sundays (0) and keep only 7 days
+  })
+    .filter((day) => day.dayOfWeek !== 0)
+    .slice(0, 7); // Filter out Sundays (0) and keep only 7 days
 
   return (
     <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#111827] via-[#1e293b] to-[#111827]">
@@ -438,18 +489,23 @@ export default function HomePage() {
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm flex items-center gap-2 text-[#9CA3AF] bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151]">
-            <FaCalendarAlt className="text-[#3B82F6]" /> {new Date().toLocaleDateString()}
+            <FaCalendarAlt className="text-[#3B82F6]" />{" "}
+            {new Date().toLocaleDateString()}
           </span>
-          
+
           {/* User Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button 
+            <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
               className="text-sm flex items-center gap-2 bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151] text-white font-medium hover:border-[#3B82F6] transition-all"
             >
-              <FaUser className="text-[#3B82F6]" /> 
+              <FaUser className="text-[#3B82F6]" />
               {user.name}
-              <FaChevronDown className={`text-[#9CA3AF] transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+              <FaChevronDown
+                className={`text-[#9CA3AF] transition-transform ${
+                  showUserDropdown ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {showUserDropdown && (
@@ -516,8 +572,8 @@ export default function HomePage() {
             <button
               key={tab}
               className={`px-6 py-2.5 rounded-md font-medium text-sm transition-all flex items-center gap-2 ${
-                activeTab === tab 
-                  ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50" 
+                activeTab === tab
+                  ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50"
                   : "text-[#9CA3AF] hover:text-white"
               }`}
               onClick={() => {
@@ -546,7 +602,7 @@ export default function HomePage() {
                 setShowFacultyDropdown(true);
               }}
               onFocus={() => {
-                setFacultySearch('');
+                setFacultySearch("");
                 setShowFacultyDropdown(true);
               }}
               className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition"
@@ -554,14 +610,16 @@ export default function HomePage() {
             {showFacultyDropdown && (
               <div className="absolute z-10 w-full mt-1 bg-[#1F2937] border border-[#374151] rounded-lg max-h-60 overflow-y-auto shadow-lg">
                 {facultyList
-                  .filter(f => f.toLowerCase().includes(facultySearch.toLowerCase()))
+                  .filter((f) =>
+                    f.toLowerCase().includes(facultySearch.toLowerCase())
+                  )
                   .map((faculty, idx) => (
                     <div
                       key={idx}
                       onClick={() => {
                         setSelectedFaculty(faculty);
                         setShowFacultyDropdown(false);
-                        setFacultySearch('');
+                        setFacultySearch("");
                       }}
                       className="px-4 py-2 hover:bg-[#374151] cursor-pointer text-white transition"
                     >
@@ -580,23 +638,27 @@ export default function HomePage() {
             {filteredRooms.map((room) => {
               const availableSlots = getAvailableSlotCount(room.name);
               const totalSlots = timeSlots.length;
-              
+
               return (
                 <div
                   key={room.id}
                   onClick={() => setSelectedRoom(room)}
                   className={`cursor-pointer px-3 py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${
-                    selectedRoom?.id === room.id 
-                      ? "bg-[#3B82F6] border-[#3B82F6] text-white shadow-[#3B82F6]/50 ring-2 ring-[#60A5FA]" 
+                    selectedRoom?.id === room.id
+                      ? "bg-[#3B82F6] border-[#3B82F6] text-white shadow-[#3B82F6]/50 ring-2 ring-[#60A5FA]"
                       : "bg-[#1F2937] border-[#374151] text-white hover:border-[#3B82F6]"
                   }`}
                 >
                   <div className="text-sm font-bold truncate">{room.name}</div>
                   <div className="text-xs text-[#9CA3AF] mt-1">{room.type}</div>
                   {/* Available Slots Count */}
-                  <div className={`text-xs mt-2 font-semibold ${
-                    selectedRoom?.id === room.id ? 'text-white' : 'text-[#3B82F6]'
-                  }`}>
+                  <div
+                    className={`text-xs mt-2 font-semibold ${
+                      selectedRoom?.id === room.id
+                        ? "text-white"
+                        : "text-[#3B82F6]"
+                    }`}
+                  >
                     {availableSlots}/{totalSlots} slots
                   </div>
                 </div>
@@ -615,7 +677,8 @@ export default function HomePage() {
                 {selectedSlots.length > 0 && (
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-[#9CA3AF]">
-                      {selectedSlots.length} slot{selectedSlots.length > 1 ? 's' : ''} selected
+                      {selectedSlots.length} slot
+                      {selectedSlots.length > 1 ? "s" : ""} selected
                     </span>
                     <button
                       onClick={handleBookSlots}
@@ -633,26 +696,34 @@ export default function HomePage() {
                 )}
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {timeSlots.map(slot => {
+                {timeSlots.map((slot) => {
                   const status = getSlotStatus(slot);
-                  const isAcademic = typeof status === 'object' && status.type === 'Academic';
-                  const statusText = isAcademic ? 'Academic Class' : status;
+                  const isAcademic =
+                    typeof status === "object" && status.type === "Academic";
+                  const statusText = isAcademic ? "Academic Class" : status;
                   const isSelected = selectedSlots.includes(slot);
                   const isFree = statusText === "Free";
                   const isExpired = statusText === "Expired";
-                  
+
                   let bgClass = "";
                   if (isExpired) {
-                    bgClass = "bg-[#6B7280] text-[#D1D5DB] cursor-not-allowed opacity-60";
+                    bgClass =
+                      "bg-[#6B7280] text-[#D1D5DB] cursor-not-allowed opacity-60";
                   } else if (isAcademic) {
-                    bgClass = "bg-purple-600 text-white shadow-purple-600/50 cursor-pointer";
+                    bgClass =
+                      "bg-purple-600 text-white shadow-purple-600/50 cursor-pointer";
                   } else if (isSelected && isFree) {
-                    bgClass = "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50 ring-4 ring-[#60A5FA] scale-105";
+                    bgClass =
+                      "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50 ring-4 ring-[#60A5FA] scale-105";
                   } else if (isFree) {
-                    bgClass = "bg-[#1F2937] hover:bg-[#374151] text-white border-2 border-[#3B82F6] hover:border-[#60A5FA]";
+                    bgClass =
+                      "bg-[#1F2937] hover:bg-[#374151] text-white border-2 border-[#3B82F6] hover:border-[#60A5FA]";
                   } else if (statusText === "Pending") {
                     bgClass = "bg-yellow-500 text-yellow-900 border-yellow-600";
-                  } else if (statusText.startsWith("Approved") || statusText === "Approved") {
+                  } else if (
+                    statusText.startsWith("Approved") ||
+                    statusText === "Approved"
+                  ) {
                     bgClass = "bg-green-600 text-white shadow-green-600/50";
                   } else if (statusText.startsWith("Blocked")) {
                     bgClass = "bg-[#374151] text-[#9CA3AF] cursor-not-allowed";
@@ -663,7 +734,13 @@ export default function HomePage() {
                   return (
                     <div
                       key={slot}
-                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${isFree && !isExpired ? "cursor-pointer" : isAcademic ? "cursor-pointer" : "cursor-default"}`}
+                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${
+                        isFree && !isExpired
+                          ? "cursor-pointer"
+                          : isAcademic
+                          ? "cursor-pointer"
+                          : "cursor-default"
+                      }`}
                       onClick={() => {
                         if (isAcademic) {
                           setSelectedAcademicDetails(status.details);
@@ -688,23 +765,39 @@ export default function HomePage() {
                         {isAcademic ? (
                           <>
                             <div>{statusText}</div>
-                            <div className="mt-1 text-purple-200">{status.details.subject}</div>
-                            <div className="text-purple-200">{status.details.year} - {status.details.section}</div>
+                            <div className="mt-1 text-purple-200">
+                              {status.details.subject}
+                            </div>
+                            <div className="text-purple-200">
+                              {status.details.year}{" "}
+                              {status.details.branch
+                                ? status.details.branch + " "
+                                : ""}
+                              {status.details.section}
+                            </div>
                           </>
                         ) : (
                           statusText
                         )}
                       </div>
-                      {isSelected && <div className="text-xs mt-1">✓ Selected</div>}
-                      {isAcademic && <div className="text-xs mt-1">🔒 Click for details</div>}
+                      {isSelected && (
+                        <div className="text-xs mt-1">✓ Selected</div>
+                      )}
+                      {isAcademic && (
+                        <div className="text-xs mt-1">🔒 Click for details</div>
+                      )}
                     </div>
                   );
                 })}
               </div>
               {selectedSlots.length > 0 && (
                 <div className="mt-6 p-4 bg-[#374151] rounded-lg">
-                  <p className="text-sm text-white font-semibold mb-2">Selected Slots:</p>
-                  <p className="text-[#9CA3AF]">{selectedSlots.sort().join(', ')}</p>
+                  <p className="text-sm text-white font-semibold mb-2">
+                    Selected Slots:
+                  </p>
+                  <p className="text-[#9CA3AF]">
+                    {selectedSlots.sort().join(", ")}
+                  </p>
                 </div>
               )}
             </div>
@@ -787,35 +880,48 @@ export default function HomePage() {
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="text-white font-bold text-lg">{booking.room}</h3>
+                          <h3 className="text-white font-bold text-lg">
+                            {booking.room}
+                          </h3>
                           <p className="text-[#9CA3AF] text-sm">
-                            {new Date(booking.date).toLocaleDateString('en-US', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
+                            {new Date(booking.date).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}
                           </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          booking.status === 'Approved' 
-                            ? 'bg-green-600 text-white' 
-                            : booking.status === 'Rejected'
-                            ? 'bg-red-600 text-white'
-                            : 'bg-yellow-500 text-yellow-900'
-                        }`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            booking.status === "Approved"
+                              ? "bg-green-600 text-white"
+                              : booking.status === "Rejected"
+                              ? "bg-red-600 text-white"
+                              : "bg-yellow-500 text-yellow-900"
+                          }`}
+                        >
                           {booking.status}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
-                          <p className="text-[#9CA3AF] text-xs mb-1">Time Slot(s)</p>
+                          <p className="text-[#9CA3AF] text-xs mb-1">
+                            Time Slot(s)
+                          </p>
                           <p className="text-white font-semibold text-sm">
-                            {formatSlotsDisplay(booking.slots || [booking.slot])}
+                            {formatSlotsDisplay(
+                              booking.slots || [booking.slot]
+                            )}
                           </p>
                         </div>
                         <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
-                          <p className="text-[#9CA3AF] text-xs mb-1">Booked On</p>
+                          <p className="text-[#9CA3AF] text-xs mb-1">
+                            Booked On
+                          </p>
                           <p className="text-white font-semibold text-sm">
                             {new Date(booking.createdAt).toLocaleDateString()}
                           </p>
@@ -825,12 +931,17 @@ export default function HomePage() {
                         <p className="text-[#9CA3AF] text-xs mb-1">Reason</p>
                         <p className="text-white text-sm">{booking.reason}</p>
                       </div>
-                      {booking.status === 'Rejected' && booking.rejectionReason && (
-                        <div className="mt-3 bg-red-900/20 border border-red-900/50 p-3 rounded">
-                          <p className="text-red-400 text-xs mb-1">Rejection Reason</p>
-                          <p className="text-red-300 text-sm">{booking.rejectionReason}</p>
-                        </div>
-                      )}
+                      {booking.status === "Rejected" &&
+                        booking.rejectionReason && (
+                          <div className="mt-3 bg-red-900/20 border border-red-900/50 p-3 rounded">
+                            <p className="text-red-400 text-xs mb-1">
+                              Rejection Reason
+                            </p>
+                            <p className="text-red-300 text-sm">
+                              {booking.rejectionReason}
+                            </p>
+                          </div>
+                        )}
                     </div>
                   ))}
                 </div>
@@ -845,7 +956,9 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-[#1F2937] rounded-lg p-6 max-w-md w-full border-2 border-purple-600 shadow-2xl shadow-purple-600/50">
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-white">Academic Class Details</h2>
+              <h2 className="text-2xl font-bold text-white">
+                Academic Class Details
+              </h2>
               <button
                 onClick={() => {
                   setShowAcademicModal(false);
@@ -859,39 +972,60 @@ export default function HomePage() {
             <div className="space-y-4">
               <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                 <p className="text-[#9CA3AF] text-xs mb-1">Subject</p>
-                <p className="text-white font-bold text-lg">{selectedAcademicDetails.subject}</p>
+                <p className="text-white font-bold text-lg">
+                  {selectedAcademicDetails.subject}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                   <p className="text-[#9CA3AF] text-xs mb-1">Type</p>
-                  <p className="text-white font-semibold">{selectedAcademicDetails.type}</p>
+                  <p className="text-white font-semibold">
+                    {selectedAcademicDetails.type}
+                  </p>
                 </div>
                 <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                   <p className="text-[#9CA3AF] text-xs mb-1">Room</p>
-                  <p className="text-white font-semibold">{selectedAcademicDetails.room}</p>
+                  <p className="text-white font-semibold">
+                    {selectedAcademicDetails.room}
+                  </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-xs mb-1">Branch</p>
+                  <p className="text-white font-semibold">
+                    {selectedAcademicDetails.branch || "N/A"}
+                  </p>
+                </div>
                 <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                   <p className="text-[#9CA3AF] text-xs mb-1">Year</p>
-                  <p className="text-white font-semibold">{selectedAcademicDetails.year}</p>
+                  <p className="text-white font-semibold">
+                    {selectedAcademicDetails.year}
+                  </p>
                 </div>
                 <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                   <p className="text-[#9CA3AF] text-xs mb-1">Section</p>
-                  <p className="text-white font-semibold">{selectedAcademicDetails.section}</p>
+                  <p className="text-white font-semibold">
+                    {selectedAcademicDetails.section}
+                  </p>
                 </div>
               </div>
               <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                 <p className="text-[#9CA3AF] text-xs mb-1">Faculty</p>
-                <p className="text-white font-semibold">{selectedAcademicDetails.faculty}</p>
+                <p className="text-white font-semibold">
+                  {selectedAcademicDetails.faculty}
+                </p>
               </div>
               <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
                 <p className="text-[#9CA3AF] text-xs mb-1">Time Slot</p>
-                <p className="text-white font-semibold">{selectedAcademicDetails.slot}</p>
+                <p className="text-white font-semibold">
+                  {selectedAcademicDetails.slot}
+                </p>
               </div>
               <div className="bg-purple-900/30 border border-purple-600/50 p-4 rounded-lg">
                 <p className="text-purple-300 text-sm">
-                  🔒 This slot is blocked for academic purposes and cannot be booked.
+                  🔒 This slot is blocked for academic purposes and cannot be
+                  booked.
                 </p>
               </div>
             </div>
