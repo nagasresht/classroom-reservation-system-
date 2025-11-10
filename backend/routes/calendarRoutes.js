@@ -13,6 +13,7 @@ router.post('/bulk', async (req, res) => {
 
   try {
     const sanitized = entries.map(entry => ({
+      branch: entry.branch || "",
       year: entry.year,
       section: entry.section,
       day: entry.day,
@@ -58,7 +59,17 @@ router.get('/view', async (req, res) => {
 router.get('/view-all', async (req, res) => {
   try {
     const data = await AcademicCalendar.find({});
-    res.json(data);
+    
+    // Dynamically add default branch 'CSE' if missing
+    const dataWithBranch = data.map(entry => {
+      const entryObj = entry.toObject();
+      if (!entryObj.branch || entryObj.branch === '') {
+        entryObj.branch = 'CSE'; // Default to CSE for old entries
+      }
+      return entryObj;
+    });
+    
+    res.json(dataWithBranch);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Fetch all entries failed' });

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const academicCalendarSchema = new mongoose.Schema({
+  branch: String, // CSE or CSBS
   year: String,
   section: String,
   day: String,
