@@ -91,15 +91,53 @@ function isBookingExpired(booking) {
 }
 
 export default function AdminPanel() {
+  const navigate = useNavigate();
+  
+  // Validate admin session
+  const validateAdminSession = () => {
+    try {
+      const userString = localStorage.getItem("user");
+      if (!userString) {
+        navigate("/");
+        return null;
+      }
+      
+      const user = JSON.parse(userString);
+      
+      // Validate required fields
+      if (!user.email || !user.name) {
+        console.error('Invalid user session');
+        localStorage.removeItem("user");
+        navigate("/");
+        return null;
+      }
+      
+      // Check admin role
+      if (user.role !== 'admin' && !user.email.toLowerCase().endsWith('@admin.com')) {
+        console.warn('Unauthorized: User is not an admin');
+        navigate("/dashboard");
+        return null;
+      }
+      
+      return user;
+    } catch (error) {
+      console.error('Session validation error:', error);
+      localStorage.removeItem("user");
+      navigate("/");
+      return null;
+    }
+  };
+
+  const adminUser = validateAdminSession();
+  
+  // If adminUser is null, component will unmount due to redirect
+  if (!adminUser) return null;
+  
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rejectionReason, setRejectionReason] = useState({});
   const [filter, setFilter] = useState("Pending");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const navigate = useNavigate();
-
-  // Get admin user info from localStorage
-  const adminUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   const predefinedReasons = [
     "Already occupied",

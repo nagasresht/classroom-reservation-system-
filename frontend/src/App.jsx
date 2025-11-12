@@ -25,14 +25,18 @@ export default function App() {
       <Route path="/verify-otp" element={<VerifyOTP />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      
+      {/* User Routes - Require Authentication */}
       <Route path="/dashboard" element={<PrivateRoute><HomePage /></PrivateRoute>} />
-      <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
-      <Route path="/admin-panel" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
-      <Route path="/admin-calendar" element={<PrivateRoute><AdminCalendarPanel /></PrivateRoute>} />
-      <Route path="/admin-add-timetable" element={<PrivateRoute><AdminTimetable /></PrivateRoute>} />
-      <Route path="/admin-timetable" element={<PrivateRoute><AdminTimetableView /></PrivateRoute>} />
-      <Route path="/admin-dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
-      <Route path="/admin-history" element={<PrivateRoute><AdminHistory /></PrivateRoute>} />
+      
+      {/* Admin Routes - Require Authentication AND Admin Role */}
+      <Route path="/admin" element={<PrivateRoute requireAdmin={true}><AdminPanel /></PrivateRoute>} />
+      <Route path="/admin-panel" element={<PrivateRoute requireAdmin={true}><AdminPanel /></PrivateRoute>} />
+      <Route path="/admin-calendar" element={<PrivateRoute requireAdmin={true}><AdminCalendarPanel /></PrivateRoute>} />
+      <Route path="/admin-add-timetable" element={<PrivateRoute requireAdmin={true}><AdminTimetable /></PrivateRoute>} />
+      <Route path="/admin-timetable" element={<PrivateRoute requireAdmin={true}><AdminTimetableView /></PrivateRoute>} />
+      <Route path="/admin-dashboard" element={<PrivateRoute requireAdmin={true}><AdminDashboard /></PrivateRoute>} />
+      <Route path="/admin-history" element={<PrivateRoute requireAdmin={true}><AdminHistory /></PrivateRoute>} />
       
     </Routes>
   );

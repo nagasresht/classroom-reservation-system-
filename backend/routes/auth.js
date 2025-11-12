@@ -173,9 +173,23 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    res.status(200).json(user);
+    // Determine role based on email domain
+    const role = email.toLowerCase().endsWith('@admin.com') ? 'admin' : 'user';
+
+    // Return user data with role
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      department: user.department,
+      staffNumber: user.staffNumber,
+      phone: user.phone,
+      isVerified: user.isVerified,
+      role: role // Add role field
+    });
 
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error during login' });
   }
 });

@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import { 
   MdMeetingRoom, 
-  MdScience,
+  MdComputer,
   MdPerson,
   MdAccountCircle,
   MdExitToApp,
@@ -174,7 +174,38 @@ const facultyList = [
 ];
 
 export default function HomePage() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  // Validate user session
+  const validateSession = () => {
+    try {
+      const userString = localStorage.getItem("user");
+      if (!userString) {
+        window.location.href = "/";
+        return null;
+      }
+      
+      const user = JSON.parse(userString);
+      
+      // Validate required fields
+      if (!user.email || !user.name) {
+        console.error('Invalid user session');
+        localStorage.removeItem("user");
+        window.location.href = "/";
+        return null;
+      }
+      
+      return user;
+    } catch (error) {
+      console.error('Session validation error:', error);
+      localStorage.removeItem("user");
+      window.location.href = "/";
+      return null;
+    }
+  };
+
+  const user = validateSession();
+  
+  // If user is null, component will unmount due to redirect
+  if (!user) return null;
 
   // Get today's date in consistent format (YYYY-MM-DD in local timezone)
   const getTodayDate = () => {
@@ -277,18 +308,24 @@ export default function HomePage() {
   };
 
   const fetchCalendar = async () => {
-    const res = await fetch("http://localhost:5000/api/calendar/view-all");
-    const data = await res.json();
-    setAcademicSlots(data);
+    try {
+      const res = await fetch("http://localhost:5000/api/calendar/view-all");
+      const data = await res.json();
+      console.log("📅 Fetched Academic Calendar Data:", data);
+      setAcademicSlots(data);
+    } catch (error) {
+      console.error("Error fetching calendar:", error);
+    }
   };
 
   useEffect(() => {
     fetchBookings();
     fetchCalendar();
 
-    // Poll for booking status changes every 5 seconds
+    // Poll for booking status changes and calendar updates every 5 seconds
     const interval = setInterval(() => {
       fetchBookings();
+      fetchCalendar();
     }, 5000);
 
     return () => clearInterval(interval);
@@ -575,6 +612,12 @@ export default function HomePage() {
       weekday: "long",
     });
     
+    console.log("🔍 Faculty View - Filtering for:", {
+      selectedFaculty,
+      dayOfWeek,
+      totalAcademicSlots: academicSlots.length
+    });
+    
     // Filter only occupied slots
     const occupiedSlots = timeSlots
       .map((slot) => {
@@ -584,9 +627,16 @@ export default function HomePage() {
             entry.slot === slot &&
             entry.faculty === selectedFaculty
         );
+        
+        if (found) {
+          console.log(`✅ Found class at ${slot}:`, found);
+        }
+        
         return found ? { slot, data: found } : null;
       })
       .filter(Boolean); // Remove null entries (free slots)
+
+    console.log(`📊 Occupied slots found:`, occupiedSlots.length);
 
     return (
       <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
@@ -855,7 +905,7 @@ export default function HomePage() {
               }}
             >
               {tab === "Rooms" && <MdMeetingRoom className="text-base sm:text-lg" />}
-              {tab === "Labs" && <MdScience className="text-base sm:text-lg" />}
+              {tab === "Labs" && <MdComputer className="text-base sm:text-lg" />}
               {tab === "Faculty" && <MdSchool className="text-base sm:text-lg" />}
               <span className="hidden sm:inline">{tab}</span>
               <span className="sm:hidden">
