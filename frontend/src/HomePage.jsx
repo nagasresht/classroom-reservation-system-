@@ -3,14 +3,37 @@ import {
   FaCalendarAlt,
   FaUser,
   FaSignOutAlt,
-  FaDoorOpen,
-  FaFlask,
   FaChevronDown,
-  FaUserCircle,
   FaHistory,
   FaBars,
   FaTimes,
 } from "react-icons/fa";
+import { 
+  MdMeetingRoom, 
+  MdScience,
+  MdPerson,
+  MdAccountCircle,
+  MdExitToApp,
+  MdSchool,
+  MdEvent,
+  MdAccessTime,
+  MdCheckCircle,
+  MdCancel,
+  MdPending
+} from "react-icons/md";
+import { 
+  BsCalendar2Week,
+  BsClockHistory,
+  BsClock
+} from "react-icons/bs";
+import { 
+  HiOutlineCalendar,
+  HiOutlineClock 
+} from "react-icons/hi";
+import { 
+  IoCalendarOutline,
+  IoTimeOutline 
+} from "react-icons/io5";
 import NotificationBell from "./NotificationBell";
 
 const allRooms = [
@@ -551,37 +574,59 @@ export default function HomePage() {
     const dayOfWeek = new Date(selectedDate).toLocaleDateString("en-US", {
       weekday: "long",
     });
+    
+    // Filter only occupied slots
+    const occupiedSlots = timeSlots
+      .map((slot) => {
+        const found = academicSlots.find(
+          (entry) =>
+            entry.day === dayOfWeek &&
+            entry.slot === slot &&
+            entry.faculty === selectedFaculty
+        );
+        return found ? { slot, data: found } : null;
+      })
+      .filter(Boolean); // Remove null entries (free slots)
+
     return (
       <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-        {timeSlots.map((slot) => {
-          const found = academicSlots.find(
-            (entry) =>
-              entry.day === dayOfWeek &&
-              entry.slot === slot &&
-              entry.faculty === selectedFaculty
-          );
+        {occupiedSlots.length === 0 ? (
+          <div className="text-center py-12 bg-[#1F2937] rounded-xl border-2 border-[#374151]">
+            <MdEvent className="text-6xl text-[#374151] mx-auto mb-4" />
+            <p className="text-[#9CA3AF] text-lg font-semibold">No classes scheduled</p>
+            <p className="text-[#6B7280] text-sm mt-2">
+              {selectedFaculty} is free on this day
+            </p>
+          </div>
+        ) : (
+          occupiedSlots.map(({ slot, data }) => {
+            const label = `${data.type} for ${data.year} ${
+              data.branch ? data.branch + " " : ""
+            }${data.section} - ${data.subject}`;
 
-          const label = found
-            ? `${found.type} for ${found.year} ${
-                found.branch ? found.branch + " " : ""
-              }${found.section} - ${found.subject}`
-            : "Free";
-
-          return (
-            <div
-              key={slot}
-              className={`p-3 sm:p-4 rounded-lg border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition
-              ${
-                label === "Free"
-                  ? "bg-[#1F2937] border-[#374151] text-[#9CA3AF]"
-                  : "bg-[#3B82F6] border-[#3B82F6] text-white shadow-lg shadow-[#3B82F6]/30"
-              }`}
-            >
-              <span className="font-semibold text-sm sm:text-base">{slot}</span>
-              <span className="text-xs sm:text-sm break-words">{label}</span>
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={slot}
+                className="p-3 sm:p-4 rounded-xl border-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition bg-gradient-to-r from-[#3B82F6] to-[#2563EB] border-[#60A5FA] text-white shadow-lg shadow-[#3B82F6]/30 hover:shadow-[#3B82F6]/50 hover:scale-[1.02]"
+              >
+                <div className="flex items-center gap-2">
+                  <MdAccessTime className="text-lg sm:text-xl" />
+                  <span className="font-bold text-sm sm:text-base">{slot}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MdSchool className="text-base sm:text-lg" />
+                  <span className="text-xs sm:text-sm break-words">{label}</span>
+                </div>
+                {data.room && (
+                  <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
+                    <MdMeetingRoom className="text-sm" />
+                    <span className="text-xs font-semibold">{data.room}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     );
   };
@@ -640,17 +685,34 @@ export default function HomePage() {
 
         {/* Desktop Menu */}
         <div className="hidden lg:flex items-center gap-4">
-          <span className="text-sm flex items-center gap-2 text-[#9CA3AF] bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151]">
-            <FaCalendarAlt className="text-[#3B82F6]" />{" "}
-            {new Date().toLocaleDateString()}
-          </span>
+          <div className="flex items-center gap-3 text-[#E5E7EB] bg-gradient-to-r from-[#1F2937] to-[#374151] px-5 py-2.5 rounded-xl border-2 border-[#3B82F6]/30 shadow-lg shadow-[#3B82F6]/20 hover:border-[#3B82F6]/50 transition-all">
+            <div className="flex items-center gap-2 border-r border-[#4B5563] pr-3">
+              <IoCalendarOutline className="text-[#3B82F6] text-lg" />
+              <span className="text-sm font-semibold">
+                {new Date().toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric"
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <IoTimeOutline className="text-[#10B981] text-lg" />
+              <span className="text-sm font-semibold">
+                {new Date().toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })}
+              </span>
+            </div>
+          </div>
 
           {/* Booking History Button */}
           <button
             onClick={() => setShowBookingHistory(true)}
-            className="text-sm flex items-center gap-2 bg-gradient-to-r from-[#10B981] to-[#059669] text-white px-4 py-2 rounded-lg shadow-lg shadow-[#10B981]/50 hover:shadow-[#10B981]/70 transition-all transform hover:scale-105 font-medium"
+            className="text-sm flex items-center gap-2 bg-gradient-to-r from-[#10B981] to-[#059669] text-white px-5 py-2.5 rounded-xl shadow-lg shadow-[#10B981]/50 hover:shadow-[#10B981]/70 transition-all transform hover:scale-105 font-semibold border border-[#10B981]/30"
           >
-            <FaHistory />
+            <BsClockHistory className="text-base" />
             My Bookings
           </button>
 
@@ -658,9 +720,9 @@ export default function HomePage() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="text-sm flex items-center gap-2 bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151] text-white font-medium hover:border-[#3B82F6] transition-all"
+              className="text-sm flex items-center gap-2 bg-[#1F2937] px-5 py-2.5 rounded-xl border-2 border-[#374151] text-white font-semibold hover:border-[#3B82F6] transition-all shadow-lg hover:shadow-[#3B82F6]/30"
             >
-              <FaUser className="text-[#3B82F6]" />
+              <MdAccountCircle className="text-[#3B82F6] text-lg" />
               {user.name}
               <FaChevronDown
                 className={`text-[#9CA3AF] transition-transform ${
@@ -670,7 +732,7 @@ export default function HomePage() {
             </button>
 
             {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-[#1F2937] border border-[#374151] rounded-lg shadow-2xl shadow-black/50 overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-[#1F2937] border-2 border-[#374151] rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50">
                 <button
                   onClick={() => {
                     setShowProfileModal(true);
@@ -678,14 +740,14 @@ export default function HomePage() {
                   }}
                   className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3"
                 >
-                  <FaUserCircle className="text-[#3B82F6]" />
+                  <MdPerson className="text-[#3B82F6] text-lg" />
                   Profile
                 </button>
                 <button
                   onClick={handleLogout}
                   className="w-full px-4 py-3 text-left text-red-400 hover:bg-[#374151] transition-colors flex items-center gap-3 border-t border-[#374151]"
                 >
-                  <FaSignOutAlt className="text-red-400" />
+                  <MdExitToApp className="text-red-400 text-lg" />
                   Logout
                 </button>
               </div>
@@ -709,14 +771,27 @@ export default function HomePage() {
 
       {/* Mobile Menu Dropdown */}
       {showMobileMenu && (
-        <div className="lg:hidden mb-6 bg-[#1F2937] border border-[#374151] rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#374151] flex items-center gap-2 text-white">
-            <FaUser className="text-[#3B82F6]" />
-            <span className="font-medium">{user.name}</span>
+        <div className="lg:hidden mb-6 bg-[#1F2937] border-2 border-[#374151] rounded-xl overflow-hidden shadow-xl">
+          <div className="px-4 py-3 border-b border-[#374151] flex items-center gap-2 text-white bg-[#374151]/30">
+            <MdAccountCircle className="text-[#3B82F6] text-xl" />
+            <span className="font-semibold">{user.name}</span>
           </div>
-          <div className="px-4 py-2 text-xs text-[#9CA3AF] flex items-center gap-2 border-b border-[#374151]">
-            <FaCalendarAlt className="text-[#3B82F6]" />
-            {new Date().toLocaleDateString()}
+          <div className="px-4 py-3 text-xs text-[#E5E7EB] flex items-center gap-3 border-b border-[#374151] bg-[#1F2937]">
+            <div className="flex items-center gap-2">
+              <IoCalendarOutline className="text-[#3B82F6] text-base" />
+              <span className="font-medium">{new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+              })}</span>
+            </div>
+            <div className="flex items-center gap-2 border-l border-[#4B5563] pl-3">
+              <BsClock className="text-[#10B981] text-sm" />
+              <span className="font-medium">{new Date().toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit"
+              })}</span>
+            </div>
           </div>
           <button
             onClick={() => {
@@ -725,22 +800,22 @@ export default function HomePage() {
             }}
             className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-b border-[#374151]"
           >
-            <FaUserCircle className="text-[#3B82F6]" />
+            <MdPerson className="text-[#3B82F6] text-lg" />
             Profile
           </button>
           <button
             onClick={handleLogout}
             className="w-full px-4 py-3 text-left text-red-400 hover:bg-[#374151] transition-colors flex items-center gap-3"
           >
-            <FaSignOutAlt className="text-red-400" />
+            <MdExitToApp className="text-red-400 text-lg" />
             Logout
           </button>
         </div>
       )}
 
       {/* Date Selector */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin pb-3 px-2 sm:px-0 -mx-2 sm:mx-0">
+      <div className="mb-4 sm:mb-6 px-1">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin py-2 px-1">
           {days.map((day) => (
             <button
               key={day.value}
@@ -748,13 +823,16 @@ export default function HomePage() {
                 setSelectedDate(day.value);
                 setSelectedRoom(null);
               }}
-              className={`flex-shrink-0 min-w-[80px] sm:min-w-[100px] px-3 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium shadow-lg transition-all transform hover:scale-105 whitespace-nowrap ${
+              className={`flex-shrink-0 min-w-[80px] sm:min-w-[110px] px-3 sm:px-6 py-3 sm:py-4 rounded-xl text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap border-2 ${
                 selectedDate === day.value
-                  ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-[#3B82F6]/50"
-                  : "bg-[#1F2937] text-[#9CA3AF] border border-[#374151] hover:border-[#3B82F6]"
+                  ? "bg-gradient-to-br from-[#3B82F6] via-[#2563EB] to-[#1D4ED8] text-white shadow-[#3B82F6]/60 border-[#60A5FA] ring-2 ring-[#60A5FA]/50 shadow-xl"
+                  : "bg-[#1F2937] text-[#9CA3AF] border-[#374151] hover:border-[#60A5FA] hover:shadow-[#3B82F6]/40 hover:text-white hover:bg-[#374151]/50 hover:ring-1 hover:ring-[#3B82F6]/30"
               }`}
             >
-              {day.label}
+              <div className="flex items-center gap-1.5 justify-center">
+                <HiOutlineCalendar className={`text-sm sm:text-base ${selectedDate === day.value ? 'text-white' : 'text-[#3B82F6]'}`} />
+                <span>{day.label}</span>
+              </div>
             </button>
           ))}
         </div>
@@ -762,22 +840,23 @@ export default function HomePage() {
 
       {/* Tab Selector */}
       <div className="flex justify-center mb-6 sm:mb-8">
-        <div className="inline-flex bg-[#1F2937] border border-[#374151] rounded-lg shadow-lg p-1 w-full sm:w-auto">
+        <div className="inline-flex bg-[#1F2937] border-2 border-[#374151] rounded-xl shadow-xl p-1 w-full sm:w-auto">
           {["Rooms", "Labs", "Faculty"].map((tab, idx) => (
             <button
               key={tab}
-              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 ${
                 activeTab === tab
                   ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50"
-                  : "text-[#9CA3AF] hover:text-white"
+                  : "text-[#9CA3AF] hover:text-white hover:bg-[#374151]/50"
               }`}
               onClick={() => {
                 setActiveTab(tab);
                 setSelectedRoom(null);
               }}
             >
-              {tab === "Rooms" && <FaDoorOpen className="text-xs sm:text-sm" />}
-              {tab === "Labs" && <FaFlask className="text-xs sm:text-sm" />}
+              {tab === "Rooms" && <MdMeetingRoom className="text-base sm:text-lg" />}
+              {tab === "Labs" && <MdScience className="text-base sm:text-lg" />}
+              {tab === "Faculty" && <MdSchool className="text-base sm:text-lg" />}
               <span className="hidden sm:inline">{tab}</span>
               <span className="sm:hidden">
                 {tab === "Rooms"
@@ -794,14 +873,14 @@ export default function HomePage() {
       {/* Floor Selector - Only show for Rooms and Labs tabs */}
       {activeTab !== "Faculty" && (
         <div className="flex justify-center mb-6 sm:mb-8">
-          <div className="inline-flex bg-[#1F2937] border border-[#374151] rounded-lg shadow-lg p-1 w-full sm:w-auto max-w-md">
+          <div className="inline-flex bg-[#1F2937] border-2 border-[#374151] rounded-xl shadow-xl p-1 w-full sm:w-auto max-w-md">
             {["Ground", "First"].map((floor) => (
               <button
                 key={floor}
-                className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-xs sm:text-sm transition-all ${
+                className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm transition-all ${
                   selectedFloor === floor
                     ? "bg-gradient-to-r from-[#10B981] to-[#059669] text-white shadow-lg shadow-[#10B981]/50"
-                    : "text-[#9CA3AF] hover:text-white"
+                    : "text-[#9CA3AF] hover:text-white hover:bg-[#374151]/50"
                 }`}
                 onClick={() => {
                   setSelectedFloor(floor);
@@ -1021,12 +1100,16 @@ export default function HomePage() {
                           className="w-3 h-3 sm:w-4 sm:h-4 accent-[#3B82F6]"
                         />
                       )}
+                      <MdAccessTime className="text-xs sm:text-sm opacity-80" />
                       {slot}
                     </div>
                     <div className="text-[10px] sm:text-xs mt-1 sm:mt-2 font-normal">
                       {isAcademic ? (
                         <>
-                          <div>{statusText}</div>
+                          <div className="flex items-center justify-center gap-1">
+                            <MdSchool className="text-xs" />
+                            {statusText}
+                          </div>
                           <div className="mt-1 text-purple-200 truncate">
                             {status.details.subject}
                           </div>
@@ -1040,21 +1123,35 @@ export default function HomePage() {
                         </>
                       ) : isDisabledByOverlap && isFree ? (
                         <>
-                          <div>Overlaps</div>
-                          <div className="text-[10px]">🚫 Can't select</div>
+                          <div className="flex items-center justify-center gap-1">
+                            <MdCancel className="text-xs" />
+                            Overlaps
+                          </div>
+                          <div className="text-[10px]">Can't select</div>
                         </>
+                      ) : statusText === "Pending" ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <MdPending className="text-xs" />
+                          {statusText}
+                        </div>
+                      ) : statusText.startsWith("Approved") || statusText === "Approved" ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <MdCheckCircle className="text-xs" />
+                          {statusText}
+                        </div>
                       ) : (
                         statusText
                       )}
                     </div>
                     {isSelected && (
-                      <div className="text-[10px] sm:text-xs mt-1">
-                        ✓ Selected
+                      <div className="text-[10px] sm:text-xs mt-1 flex items-center justify-center gap-1">
+                        <MdCheckCircle className="text-xs" />
+                        Selected
                       </div>
                     )}
                     {isAcademic && (
                       <div className="text-[10px] sm:text-xs mt-1">
-                        🔒 Click for details
+                        Click for details
                       </div>
                     )}
                   </div>
@@ -1078,10 +1175,10 @@ export default function HomePage() {
       {/* Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
-          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6 lg:p-8 border border-[#374151] max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6 lg:p-8 border-2 border-[#374151] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-                <FaUserCircle className="text-[#3B82F6] text-xl sm:text-2xl" />
+                <MdAccountCircle className="text-[#3B82F6] text-2xl sm:text-3xl" />
                 Profile
               </h2>
               <button
@@ -1134,10 +1231,10 @@ export default function HomePage() {
       {/* Booking History Modal */}
       {showBookingHistory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-2 sm:p-4">
-          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-[#374151]">
-            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[#374151]">
+          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border-2 border-[#374151]">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[#374151] bg-[#374151]/30">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-                <FaHistory className="text-[#3B82F6] text-lg sm:text-xl" />
+                <BsClockHistory className="text-[#3B82F6] text-xl sm:text-2xl" />
                 My Booking History
               </h2>
               <button
@@ -1150,7 +1247,7 @@ export default function HomePage() {
             <div className="p-3 sm:p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
               {getUserBookings().length === 0 ? (
                 <div className="text-center py-12">
-                  <FaHistory className="text-6xl text-[#374151] mx-auto mb-4" />
+                  <BsClockHistory className="text-6xl text-[#374151] mx-auto mb-4" />
                   <p className="text-[#9CA3AF] text-lg">No bookings yet</p>
                 </div>
               ) : (
@@ -1174,10 +1271,12 @@ export default function HomePage() {
                       >
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-white font-bold text-base sm:text-lg truncate">
+                            <h3 className="text-white font-bold text-base sm:text-lg truncate flex items-center gap-2">
+                              <MdMeetingRoom className="text-[#3B82F6]" />
                               {booking.room}
                             </h3>
-                            <p className="text-[#9CA3AF] text-xs sm:text-sm">
+                            <p className="text-[#9CA3AF] text-xs sm:text-sm flex items-center gap-1">
+                              <IoCalendarOutline className="text-sm" />
                               {new Date(booking.date).toLocaleDateString(
                                 "en-US",
                                 {
@@ -1190,7 +1289,7 @@ export default function HomePage() {
                             </p>
                           </div>
                           <span
-                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 ${
                               booking.status === "Approved"
                                 ? "bg-green-600 text-white"
                                 : booking.status === "Rejected"
@@ -1198,12 +1297,16 @@ export default function HomePage() {
                                 : "bg-yellow-500 text-yellow-900"
                             }`}
                           >
+                            {booking.status === "Approved" && <MdCheckCircle className="text-sm" />}
+                            {booking.status === "Rejected" && <MdCancel className="text-sm" />}
+                            {booking.status === "Pending" && <MdPending className="text-sm" />}
                             {booking.status}
                           </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
                           <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
-                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1 flex items-center gap-1">
+                              <MdAccessTime className="text-sm" />
                               Time Slot(s)
                             </p>
                             <p className="text-white font-semibold text-xs sm:text-sm">
@@ -1213,7 +1316,8 @@ export default function HomePage() {
                             </p>
                           </div>
                           <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
-                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1 flex items-center gap-1">
+                              <MdEvent className="text-sm" />
                               Booked On
                             </p>
                             <p className="text-white font-semibold text-xs sm:text-sm">

@@ -24,6 +24,8 @@ export default function AdminTimetable() {
   const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
   const [savedSectionRoom, setSavedSectionRoom] = useState(null);
   const [allowRoomChange, setAllowRoomChange] = useState(false);
+  const [isOtherFaculty, setIsOtherFaculty] = useState(false);
+  const [customFacultyName, setCustomFacultyName] = useState("");
 
   // Faculty list
   const facultyList = [
@@ -350,6 +352,9 @@ export default function AdminTimetable() {
           setMessage("");
           setAllowRoomChange(false);
           setSavedSectionRoom(null);
+          setIsOtherFaculty(false);
+          setCustomFacultyName("");
+          setFacultySearch("");
         }, 2000);
       } else {
         setMessage("❌ " + (data.message || "Failed to add timetable entry"));
@@ -836,19 +841,37 @@ export default function AdminTimetable() {
                     </label>
                     <input
                       type="text"
-                      value={formData.faculty || facultySearch}
+                      value={
+                        isOtherFaculty
+                          ? customFacultyName
+                          : formData.faculty || facultySearch
+                      }
                       onChange={(e) => {
-                        setFacultySearch(e.target.value);
-                        handleChange("faculty", ""); // Clear selection when typing
-                        setShowFacultyDropdown(true);
+                        if (isOtherFaculty) {
+                          setCustomFacultyName(e.target.value);
+                          handleChange("faculty", e.target.value);
+                        } else {
+                          setFacultySearch(e.target.value);
+                          handleChange("faculty", ""); // Clear selection when typing
+                          setShowFacultyDropdown(true);
+                        }
                       }}
-                      onFocus={() => setShowFacultyDropdown(true)}
+                      onFocus={() => {
+                        if (!isOtherFaculty) {
+                          setShowFacultyDropdown(true);
+                        }
+                      }}
                       className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      placeholder="Type to search faculty..."
+                      placeholder={
+                        isOtherFaculty
+                          ? "Enter faculty name..."
+                          : "Type to search faculty..."
+                      }
+                      disabled={isOtherFaculty ? false : false}
                     />
 
                     {/* Dropdown list */}
-                    {showFacultyDropdown && (
+                    {showFacultyDropdown && !isOtherFaculty && (
                       <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {facultyList
                           .filter((faculty) =>
@@ -867,12 +890,28 @@ export default function AdminTimetable() {
                                 handleChange("faculty", faculty);
                                 setFacultySearch("");
                                 setShowFacultyDropdown(false);
+                                setIsOtherFaculty(false);
                               }}
                               className="px-4 py-2 hover:bg-purple-100 cursor-pointer border-b border-gray-200 last:border-b-0"
                             >
                               {faculty}
                             </div>
                           ))}
+                        
+                        {/* "Other" Option */}
+                        <div
+                          onClick={() => {
+                            setIsOtherFaculty(true);
+                            setCustomFacultyName("");
+                            handleChange("faculty", "");
+                            setFacultySearch("");
+                            setShowFacultyDropdown(false);
+                          }}
+                          className="px-4 py-3 hover:bg-blue-100 cursor-pointer border-t-2 border-blue-300 bg-blue-50 font-semibold text-blue-700 flex items-center gap-2"
+                        >
+                          <span>➕</span> Other (Enter Custom Faculty Name)
+                        </div>
+
                         {facultyList.filter((faculty) =>
                           faculty
                             .toLowerCase()
@@ -884,6 +923,26 @@ export default function AdminTimetable() {
                             No faculty found
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* Show badge when "Other" is selected */}
+                    {isOtherFaculty && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+                          ✏️ Custom Faculty Name
+                        </span>
+                        <button
+                          onClick={() => {
+                            setIsOtherFaculty(false);
+                            setCustomFacultyName("");
+                            handleChange("faculty", "");
+                            setShowFacultyDropdown(false);
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm font-semibold underline"
+                        >
+                          Choose from list instead
+                        </button>
                       </div>
                     )}
                   </div>
