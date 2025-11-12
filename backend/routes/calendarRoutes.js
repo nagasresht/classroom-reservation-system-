@@ -24,6 +24,17 @@ router.post('/bulk', async (req, res) => {
       faculty: entry.faculty || ""
     }));
 
+    // Delete old entries for the same year/section/day/slot before inserting new ones
+    for (const entry of sanitized) {
+      await AcademicCalendar.deleteMany({
+        year: entry.year,
+        section: entry.section,
+        day: entry.day,
+        slot: entry.slot
+      });
+    }
+
+    // Insert new entries
     const result = await AcademicCalendar.insertMany(sanitized);
     res.status(201).json({ message: 'Timetable saved successfully', data: result });
   } catch (error) {

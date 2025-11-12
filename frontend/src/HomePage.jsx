@@ -8,11 +8,13 @@ import {
   FaChevronDown,
   FaUserCircle,
   FaHistory,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
 import NotificationBell from "./NotificationBell";
 
 const allRooms = [
-  // Theory/Class Rooms
+  // ===== GROUND FLOOR - Theory/Class Rooms (E0xx) =====
   { id: 1, name: "E003", type: "Theory", color: "bg-[#3B82F6]/20" },
   { id: 2, name: "E004", type: "Theory", color: "bg-[#3B82F6]/20" },
   { id: 3, name: "E005", type: "Theory", color: "bg-[#3B82F6]/20" },
@@ -20,19 +22,38 @@ const allRooms = [
   { id: 5, name: "E012 & E013", type: "Theory", color: "bg-[#3B82F6]/20" },
   { id: 6, name: "E032", type: "Theory", color: "bg-[#3B82F6]/20" },
   { id: 7, name: "E033", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 8, name: "E034 (Audi)", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 9, name: "E035", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 10, name: "E036", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 11, name: "E037", type: "Theory", color: "bg-[#3B82F6]/20" },
-  { id: 12, name: "E038", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 8, name: "E035", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 9, name: "E036", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 10, name: "E037", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 11, name: "E038", type: "Theory", color: "bg-[#3B82F6]/20" },
 
-  // Labs
-  { id: 13, name: "E001", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 14, name: "E002", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 15, name: "E014 & E015", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 16, name: "E028", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 17, name: "E029", type: "Lab", color: "bg-[#60A5FA]/20" },
-  { id: 18, name: "E030 & E031", type: "Lab", color: "bg-[#60A5FA]/20" },
+  // ===== FIRST FLOOR - Theory/Class Rooms (E1xx) =====
+  { id: 19, name: "E104", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 20, name: "E105", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 21, name: "E106", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 22, name: "E107", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 23, name: "E113 & E114", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 24, name: "E138", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 25, name: "E139", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 26, name: "E140", type: "Theory", color: "bg-[#3B82F6]/20" },
+  { id: 27, name: "E141", type: "Theory", color: "bg-[#3B82F6]/20" },
+
+  // ===== GROUND FLOOR - Labs (E0xx) =====
+  { id: 12, name: "E001", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 13, name: "E002", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 14, name: "E014 & E015", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 15, name: "E028", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 16, name: "E029", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 17, name: "E030 & E031", type: "Lab", color: "bg-[#60A5FA]/20" },
+
+  // ===== FIRST FLOOR - Labs (E1xx) =====
+  { id: 28, name: "E101", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 29, name: "E102", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 30, name: "E103", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 31, name: "E115 & E116", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 32, name: "E130", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 33, name: "E131", type: "Lab", color: "bg-[#60A5FA]/20" },
+  { id: 34, name: "E134", type: "Lab", color: "bg-[#60A5FA]/20" },
 ];
 
 const timeSlots = [
@@ -147,6 +168,7 @@ export default function HomePage() {
 
   const [selectedDate, setSelectedDate] = useState(getInitialDate());
   const [activeTab, setActiveTab] = useState("Rooms");
+  const [selectedFloor, setSelectedFloor] = useState("All"); // NEW: Floor filter
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedFaculty, setSelectedFaculty] = useState(facultyList[0]);
   const [selectedSlots, setSelectedSlots] = useState([]); // NEW: Track multiple selected slots
@@ -157,6 +179,7 @@ export default function HomePage() {
   const [showFacultyDropdown, setShowFacultyDropdown] = useState(false);
   const [showAcademicModal, setShowAcademicModal] = useState(false);
   const [selectedAcademicDetails, setSelectedAcademicDetails] = useState(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const dropdownRef = useRef(null);
   const facultyDropdownRef = useRef(null);
@@ -418,7 +441,7 @@ export default function HomePage() {
       weekday: "long",
     });
     return (
-      <div className="mt-6 space-y-3">
+      <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
         {timeSlots.map((slot) => {
           const found = academicSlots.find(
             (entry) =>
@@ -436,15 +459,15 @@ export default function HomePage() {
           return (
             <div
               key={slot}
-              className={`p-4 rounded-lg border flex justify-between items-center transition
+              className={`p-3 sm:p-4 rounded-lg border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition
               ${
                 label === "Free"
                   ? "bg-[#1F2937] border-[#374151] text-[#9CA3AF]"
                   : "bg-[#3B82F6] border-[#3B82F6] text-white shadow-lg shadow-[#3B82F6]/30"
               }`}
             >
-              <span className="font-semibold">{slot}</span>
-              <span className="text-sm">{label}</span>
+              <span className="font-semibold text-sm sm:text-base">{slot}</span>
+              <span className="text-xs sm:text-sm break-words">{label}</span>
             </div>
           );
         })}
@@ -453,9 +476,27 @@ export default function HomePage() {
   };
 
   const filteredRooms = allRooms.filter((room) => {
-    if (activeTab === "Rooms") return room.type === "Theory";
-    if (activeTab === "Labs") return room.type === "Lab";
-    return false;
+    // Filter by type (Rooms/Labs)
+    let typeMatch = false;
+    if (activeTab === "Rooms") typeMatch = room.type === "Theory";
+    if (activeTab === "Labs") typeMatch = room.type === "Lab";
+    
+    if (!typeMatch) return false;
+
+    // Filter by floor
+    if (selectedFloor === "All") return true;
+    
+    // Ground Floor: rooms starting with E0 (E001, E002, E003, etc.)
+    if (selectedFloor === "Ground") {
+      return room.name.startsWith("E0");
+    }
+    
+    // First Floor: rooms starting with E1 (E101, E102, E138, etc.)
+    if (selectedFloor === "First") {
+      return room.name.startsWith("E1");
+    }
+    
+    return true;
   });
 
   const days = Array.from({ length: 14 }, (_, i) => {
@@ -479,15 +520,17 @@ export default function HomePage() {
     .slice(0, 7); // Filter out Sundays (0) and keep only 7 days
 
   return (
-    <div className="min-h-screen px-6 py-6 bg-gradient-to-br from-[#111827] via-[#1e293b] to-[#111827]">
+    <div className="min-h-screen px-4 sm:px-6 py-4 sm:py-6 bg-gradient-to-br from-[#111827] via-[#1e293b] to-[#111827]">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold text-white">
+      <div className="flex justify-between items-center mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
             Classroom<span className="text-[#3B82F6]">Hub</span>
           </h1>
         </div>
-        <div className="flex items-center gap-4">
+        
+        {/* Desktop Menu */}
+        <div className="hidden lg:flex items-center gap-4">
           <span className="text-sm flex items-center gap-2 text-[#9CA3AF] bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151]">
             <FaCalendarAlt className="text-[#3B82F6]" />{" "}
             {new Date().toLocaleDateString()}
@@ -543,35 +586,89 @@ export default function HomePage() {
 
           <NotificationBell userEmail={user.email} />
         </div>
+
+        {/* Mobile Menu Button */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <NotificationBell userEmail={user.email} />
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="text-white bg-[#1F2937] p-2 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
+          >
+            {showMobileMenu ? <FaTimes size={20} /> : <FaBars size={20} />}
+          </button>
+        </div>
       </div>
 
-      {/* Date Selector */}
-      <div className="flex justify-center gap-2 mb-6 overflow-x-auto pb-2">
-        {days.map((day) => (
+      {/* Mobile Menu Dropdown */}
+      {showMobileMenu && (
+        <div className="lg:hidden mb-6 bg-[#1F2937] border border-[#374151] rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#374151] flex items-center gap-2 text-white">
+            <FaUser className="text-[#3B82F6]" />
+            <span className="font-medium">{user.name}</span>
+          </div>
+          <div className="px-4 py-2 text-xs text-[#9CA3AF] flex items-center gap-2 border-b border-[#374151]">
+            <FaCalendarAlt className="text-[#3B82F6]" />
+            {new Date().toLocaleDateString()}
+          </div>
           <button
-            key={day.value}
             onClick={() => {
-              setSelectedDate(day.value);
-              setSelectedRoom(null);
+              setShowProfileModal(true);
+              setShowMobileMenu(false);
             }}
-            className={`px-6 py-3 rounded-lg text-sm font-medium shadow-lg transition-all transform hover:scale-105 ${
-              selectedDate === day.value
-                ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-[#3B82F6]/50"
-                : "bg-[#1F2937] text-[#9CA3AF] border border-[#374151] hover:border-[#3B82F6]"
-            }`}
+            className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-b border-[#374151]"
           >
-            {day.label}
+            <FaUserCircle className="text-[#3B82F6]" />
+            Profile
           </button>
-        ))}
+          <button
+            onClick={() => {
+              setShowBookingHistory(true);
+              setShowMobileMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-b border-[#374151]"
+          >
+            <FaHistory className="text-[#3B82F6]" />
+            Booking History
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-3 text-left text-red-400 hover:bg-[#374151] transition-colors flex items-center gap-3"
+          >
+            <FaSignOutAlt className="text-red-400" />
+            Logout
+          </button>
+        </div>
+      )}
+
+      {/* Date Selector */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-thin pb-3 px-2 sm:px-0 -mx-2 sm:mx-0">
+          {days.map((day) => (
+            <button
+              key={day.value}
+              onClick={() => {
+                setSelectedDate(day.value);
+                setSelectedRoom(null);
+              }}
+              className={`flex-shrink-0 min-w-[80px] sm:min-w-[100px] px-3 sm:px-6 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium shadow-lg transition-all transform hover:scale-105 whitespace-nowrap ${
+                selectedDate === day.value
+                  ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-[#3B82F6]/50"
+                  : "bg-[#1F2937] text-[#9CA3AF] border border-[#374151] hover:border-[#3B82F6]"
+              }`}
+            >
+              {day.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Selector */}
-      <div className="flex justify-center mb-8">
-        <div className="inline-flex bg-[#1F2937] border border-[#374151] rounded-lg shadow-lg p-1">
+      <div className="flex justify-center mb-6 sm:mb-8">
+        <div className="inline-flex bg-[#1F2937] border border-[#374151] rounded-lg shadow-lg p-1 w-full sm:w-auto">
           {["Rooms", "Labs", "Faculty"].map((tab, idx) => (
             <button
               key={tab}
-              className={`px-6 py-2.5 rounded-md font-medium text-sm transition-all flex items-center gap-2 ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 ${
                 activeTab === tab
                   ? "bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50"
                   : "text-[#9CA3AF] hover:text-white"
@@ -581,18 +678,45 @@ export default function HomePage() {
                 setSelectedRoom(null);
               }}
             >
-              {tab === "Rooms" && <FaDoorOpen />}
-              {tab === "Labs" && <FaFlask />}
-              {tab}
+              {tab === "Rooms" && <FaDoorOpen className="text-xs sm:text-sm" />}
+              {tab === "Labs" && <FaFlask className="text-xs sm:text-sm" />}
+              <span className="hidden sm:inline">{tab}</span>
+              <span className="sm:hidden">{tab === "Rooms" ? "Rooms" : tab === "Labs" ? "Labs" : "Faculty"}</span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Floor Selector - Only show for Rooms and Labs tabs */}
+      {activeTab !== "Faculty" && (
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="inline-flex bg-[#1F2937] border border-[#374151] rounded-lg shadow-lg p-1 w-full sm:w-auto max-w-md">
+            {["All", "Ground", "First"].map((floor) => (
+              <button
+                key={floor}
+                className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-xs sm:text-sm transition-all ${
+                  selectedFloor === floor
+                    ? "bg-gradient-to-r from-[#10B981] to-[#059669] text-white shadow-lg shadow-[#10B981]/50"
+                    : "text-[#9CA3AF] hover:text-white"
+                }`}
+                onClick={() => {
+                  setSelectedFloor(floor);
+                  setSelectedRoom(null);
+                }}
+              >
+                {floor === "All" && "All Floors"}
+                {floor === "Ground" && "Ground Floor"}
+                {floor === "First" && "1st Floor"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Faculty View */}
       {activeTab === "Faculty" ? (
-        <div className="max-w-2xl mx-auto">
-          <div className="relative mb-6" ref={facultyDropdownRef}>
+        <div className="max-w-2xl mx-auto px-2 sm:px-0">
+          <div className="relative mb-4 sm:mb-6" ref={facultyDropdownRef}>
             <input
               type="text"
               placeholder="Search faculty..."
@@ -605,7 +729,7 @@ export default function HomePage() {
                 setFacultySearch("");
                 setShowFacultyDropdown(true);
               }}
-              className="w-full bg-[#1F2937] border border-[#374151] text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition"
+              className="w-full bg-[#1F2937] border border-[#374151] text-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition"
             />
             {showFacultyDropdown && (
               <div className="absolute z-10 w-full mt-1 bg-[#1F2937] border border-[#374151] rounded-lg max-h-60 overflow-y-auto shadow-lg">
@@ -621,7 +745,7 @@ export default function HomePage() {
                         setShowFacultyDropdown(false);
                         setFacultySearch("");
                       }}
-                      className="px-4 py-2 hover:bg-[#374151] cursor-pointer text-white transition"
+                      className="px-3 sm:px-4 py-2 hover:bg-[#374151] cursor-pointer text-white text-sm sm:text-base transition"
                     >
                       {faculty}
                     </div>
@@ -634,7 +758,7 @@ export default function HomePage() {
       ) : (
         <>
           {/* Room/Lab Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-3 mb-6 sm:mb-10">
             {filteredRooms.map((room) => {
               const availableSlots = getAvailableSlotCount(room.name);
               const totalSlots = timeSlots.length;
@@ -643,17 +767,17 @@ export default function HomePage() {
                 <div
                   key={room.id}
                   onClick={() => setSelectedRoom(room)}
-                  className={`cursor-pointer px-3 py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${
+                  className={`cursor-pointer px-2 sm:px-3 py-3 sm:py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${
                     selectedRoom?.id === room.id
                       ? "bg-[#3B82F6] border-[#3B82F6] text-white shadow-[#3B82F6]/50 ring-2 ring-[#60A5FA]"
                       : "bg-[#1F2937] border-[#374151] text-white hover:border-[#3B82F6]"
                   }`}
                 >
-                  <div className="text-sm font-bold truncate">{room.name}</div>
-                  <div className="text-xs text-[#9CA3AF] mt-1">{room.type}</div>
+                  <div className="text-xs sm:text-sm font-bold truncate">{room.name}</div>
+                  <div className="text-[10px] sm:text-xs text-[#9CA3AF] mt-1">{room.type}</div>
                   {/* Available Slots Count */}
                   <div
-                    className={`text-xs mt-2 font-semibold ${
+                    className={`text-[10px] sm:text-xs mt-1 sm:mt-2 font-semibold ${
                       selectedRoom?.id === room.id
                         ? "text-white"
                         : "text-[#3B82F6]"
@@ -665,37 +789,51 @@ export default function HomePage() {
               );
             })}
           </div>
+        </>
+      )}
 
-          {/* Time Slots */}
-          {selectedRoom && (
-            <div className="bg-[#1F2937] border border-[#374151] shadow-2xl p-8 rounded-2xl max-w-4xl mx-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                  <span className="w-2 h-8 bg-gradient-to-b from-[#3B82F6] to-[#2563EB] rounded-full"></span>
-                  Slots for {selectedRoom.name} on {selectedDate}
-                </h2>
-                {selectedSlots.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-[#9CA3AF]">
-                      {selectedSlots.length} slot
-                      {selectedSlots.length > 1 ? "s" : ""} selected
-                    </span>
-                    <button
-                      onClick={handleBookSlots}
-                      className="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1D4ED8] text-white px-6 py-2 rounded-lg font-semibold shadow-lg shadow-[#3B82F6]/50 transition-all transform hover:scale-105"
-                    >
-                      Book Selected
-                    </button>
-                    <button
-                      onClick={() => setSelectedSlots([])}
-                      className="bg-[#374151] hover:bg-[#4B5563] text-white px-4 py-2 rounded-lg font-semibold transition-all"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {/* Time Slots Modal */}
+      {selectedRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-2 sm:p-4">
+          <div className="bg-[#1F2937] border border-[#374151] shadow-2xl p-4 sm:p-6 lg:p-8 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
+                <span className="w-1.5 sm:w-2 h-6 sm:h-8 bg-gradient-to-b from-[#3B82F6] to-[#2563EB] rounded-full"></span>
+                <span className="truncate">Slots for {selectedRoom.name} on {selectedDate}</span>
+              </h2>
+              <button
+                onClick={() => {
+                  setSelectedRoom(null);
+                  setSelectedSlots([]);
+                }}
+                className="text-[#9CA3AF] hover:text-white text-2xl transition-all hover:rotate-90 duration-300"
+              >
+                ✖
+              </button>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+              {selectedSlots.length > 0 && (
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                  <span className="text-xs sm:text-sm text-[#9CA3AF]">
+                    {selectedSlots.length} slot
+                    {selectedSlots.length > 1 ? "s" : ""} selected
+                  </span>
+                  <button
+                    onClick={handleBookSlots}
+                    className="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1D4ED8] text-white px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg shadow-[#3B82F6]/50 transition-all transform hover:scale-105"
+                  >
+                    Book
+                  </button>
+                  <button
+                    onClick={() => setSelectedSlots([])}
+                    className="bg-[#374151] hover:bg-[#4B5563] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-2 sm:gap-4">
                 {timeSlots.map((slot) => {
                   const status = getSlotStatus(slot);
                   const isAcademic =
@@ -734,7 +872,7 @@ export default function HomePage() {
                   return (
                     <div
                       key={slot}
-                      className={`p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${
+                      className={`p-3 sm:p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${
                         isFree && !isExpired
                           ? "cursor-pointer"
                           : isAcademic
@@ -750,25 +888,25 @@ export default function HomePage() {
                         }
                       }}
                     >
-                      <div className="text-sm flex items-center justify-center gap-2">
+                      <div className="text-xs sm:text-sm flex items-center justify-center gap-1 sm:gap-2">
                         {isFree && !isExpired && (
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => {}}
-                            className="w-4 h-4 accent-[#3B82F6]"
+                            className="w-3 h-3 sm:w-4 sm:h-4 accent-[#3B82F6]"
                           />
                         )}
                         {slot}
                       </div>
-                      <div className="text-xs mt-2 font-normal">
+                      <div className="text-[10px] sm:text-xs mt-1 sm:mt-2 font-normal">
                         {isAcademic ? (
                           <>
                             <div>{statusText}</div>
-                            <div className="mt-1 text-purple-200">
+                            <div className="mt-1 text-purple-200 truncate">
                               {status.details.subject}
                             </div>
-                            <div className="text-purple-200">
+                            <div className="text-purple-200 truncate">
                               {status.details.year}{" "}
                               {status.details.branch
                                 ? status.details.branch + " "
@@ -781,10 +919,10 @@ export default function HomePage() {
                         )}
                       </div>
                       {isSelected && (
-                        <div className="text-xs mt-1">✓ Selected</div>
+                        <div className="text-[10px] sm:text-xs mt-1">✓ Selected</div>
                       )}
                       {isAcademic && (
-                        <div className="text-xs mt-1">🔒 Click for details</div>
+                        <div className="text-[10px] sm:text-xs mt-1">🔒 Click for details</div>
                       )}
                     </div>
                   );
@@ -800,48 +938,47 @@ export default function HomePage() {
                   </p>
                 </div>
               )}
-            </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
 
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-md p-8 border border-[#374151]">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                <FaUserCircle className="text-[#3B82F6]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
+          <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-md p-4 sm:p-6 lg:p-8 border border-[#374151] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
+                <FaUserCircle className="text-[#3B82F6] text-xl sm:text-2xl" />
                 Profile
               </h2>
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="text-[#9CA3AF] hover:text-white text-2xl transition"
+                className="text-[#9CA3AF] hover:text-white text-xl sm:text-2xl transition"
               >
                 ✖
               </button>
             </div>
-            <div className="space-y-4">
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-sm">Name</p>
-                <p className="text-white font-semibold">{user.name}</p>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs sm:text-sm">Name</p>
+                <p className="text-white font-semibold text-sm sm:text-base">{user.name}</p>
               </div>
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-sm">Email</p>
-                <p className="text-white font-semibold">{user.email}</p>
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs sm:text-sm">Email</p>
+                <p className="text-white font-semibold text-sm sm:text-base break-all">{user.email}</p>
               </div>
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-sm">Department</p>
-                <p className="text-white font-semibold">{user.department}</p>
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs sm:text-sm">Department</p>
+                <p className="text-white font-semibold text-sm sm:text-base">{user.department}</p>
               </div>
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-sm">Staff Number</p>
-                <p className="text-white font-semibold">{user.staffNumber}</p>
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-xs sm:text-sm">Staff Number</p>
+                <p className="text-white font-semibold text-sm sm:text-base">{user.staffNumber}</p>
               </div>
               {user.phone && (
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-sm">Phone</p>
-                  <p className="text-white font-semibold">{user.phone}</p>
+                <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-xs sm:text-sm">Phone</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{user.phone}</p>
                 </div>
               )}
             </div>
@@ -851,39 +988,39 @@ export default function HomePage() {
 
       {/* Booking History Modal */}
       {showBookingHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-2 sm:p-4">
           <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-[#374151]">
-            <div className="flex justify-between items-center p-6 border-b border-[#374151]">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                <FaHistory className="text-[#3B82F6]" />
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[#374151]">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
+                <FaHistory className="text-[#3B82F6] text-lg sm:text-xl" />
                 My Booking History
               </h2>
               <button
                 onClick={() => setShowBookingHistory(false)}
-                className="text-[#9CA3AF] hover:text-white text-2xl transition"
+                className="text-[#9CA3AF] hover:text-white text-xl sm:text-2xl transition"
               >
                 ✖
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+            <div className="p-3 sm:p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
               {getUserBookings().length === 0 ? (
                 <div className="text-center py-12">
                   <FaHistory className="text-6xl text-[#374151] mx-auto mb-4" />
                   <p className="text-[#9CA3AF] text-lg">No bookings yet</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {getUserBookings().map((booking) => (
                     <div
                       key={booking._id}
-                      className="bg-[#111827] p-5 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
+                      className="bg-[#111827] p-3 sm:p-5 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
                     >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="text-white font-bold text-lg">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-bold text-base sm:text-lg truncate">
                             {booking.room}
                           </h3>
-                          <p className="text-[#9CA3AF] text-sm">
+                          <p className="text-[#9CA3AF] text-xs sm:text-sm">
                             {new Date(booking.date).toLocaleDateString(
                               "en-US",
                               {
@@ -896,7 +1033,7 @@ export default function HomePage() {
                           </p>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${
                             booking.status === "Approved"
                               ? "bg-green-600 text-white"
                               : booking.status === "Rejected"
@@ -907,37 +1044,37 @@ export default function HomePage() {
                           {booking.status}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
-                          <p className="text-[#9CA3AF] text-xs mb-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
+                        <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                          <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
                             Time Slot(s)
                           </p>
-                          <p className="text-white font-semibold text-sm">
+                          <p className="text-white font-semibold text-xs sm:text-sm">
                             {formatSlotsDisplay(
                               booking.slots || [booking.slot]
                             )}
                           </p>
                         </div>
-                        <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
-                          <p className="text-[#9CA3AF] text-xs mb-1">
+                        <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                          <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
                             Booked On
                           </p>
-                          <p className="text-white font-semibold text-sm">
+                          <p className="text-white font-semibold text-xs sm:text-sm">
                             {new Date(booking.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <div className="bg-[#1F2937] p-3 rounded border border-[#374151]">
-                        <p className="text-[#9CA3AF] text-xs mb-1">Reason</p>
-                        <p className="text-white text-sm">{booking.reason}</p>
+                      <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                        <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Reason</p>
+                        <p className="text-white text-xs sm:text-sm break-words">{booking.reason}</p>
                       </div>
                       {booking.status === "Rejected" &&
                         booking.rejectionReason && (
-                          <div className="mt-3 bg-red-900/20 border border-red-900/50 p-3 rounded">
-                            <p className="text-red-400 text-xs mb-1">
+                          <div className="mt-2 sm:mt-3 bg-red-900/20 border border-red-900/50 p-2 sm:p-3 rounded">
+                            <p className="text-red-400 text-[10px] sm:text-xs mb-1">
                               Rejection Reason
                             </p>
-                            <p className="text-red-300 text-sm">
+                            <p className="text-red-300 text-xs sm:text-sm break-words">
                               {booking.rejectionReason}
                             </p>
                           </div>
@@ -953,10 +1090,10 @@ export default function HomePage() {
 
       {/* Academic Class Details Modal */}
       {showAcademicModal && selectedAcademicDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1F2937] rounded-lg p-6 max-w-md w-full border-2 border-purple-600 shadow-2xl shadow-purple-600/50">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-[#1F2937] rounded-lg p-4 sm:p-6 max-w-md w-full border-2 border-purple-600 shadow-2xl shadow-purple-600/50 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
                 Academic Class Details
               </h2>
               <button
@@ -964,66 +1101,66 @@ export default function HomePage() {
                   setShowAcademicModal(false);
                   setSelectedAcademicDetails(null);
                 }}
-                className="text-gray-400 hover:text-white transition text-2xl"
+                className="text-gray-400 hover:text-white transition text-xl sm:text-2xl"
               >
                 ×
               </button>
             </div>
-            <div className="space-y-4">
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-xs mb-1">Subject</p>
-                <p className="text-white font-bold text-lg">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Subject</p>
+                <p className="text-white font-bold text-base sm:text-lg break-words">
                   {selectedAcademicDetails.subject}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-xs mb-1">Type</p>
-                  <p className="text-white font-semibold">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Type</p>
+                  <p className="text-white font-semibold text-xs sm:text-sm">
                     {selectedAcademicDetails.type}
                   </p>
                 </div>
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-xs mb-1">Room</p>
-                  <p className="text-white font-semibold">
+                <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Room</p>
+                  <p className="text-white font-semibold text-xs sm:text-sm truncate">
                     {selectedAcademicDetails.room}
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-xs mb-1">Branch</p>
-                  <p className="text-white font-semibold">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Branch</p>
+                  <p className="text-white font-semibold text-xs sm:text-sm truncate">
                     {selectedAcademicDetails.branch || "N/A"}
                   </p>
                 </div>
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-xs mb-1">Year</p>
-                  <p className="text-white font-semibold">
+                <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Year</p>
+                  <p className="text-white font-semibold text-xs sm:text-sm">
                     {selectedAcademicDetails.year}
                   </p>
                 </div>
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-xs mb-1">Section</p>
-                  <p className="text-white font-semibold">
+                <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Section</p>
+                  <p className="text-white font-semibold text-xs sm:text-sm">
                     {selectedAcademicDetails.section}
                   </p>
                 </div>
               </div>
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-xs mb-1">Faculty</p>
-                <p className="text-white font-semibold">
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Faculty</p>
+                <p className="text-white font-semibold text-xs sm:text-sm break-words">
                   {selectedAcademicDetails.faculty}
                 </p>
               </div>
-              <div className="bg-[#111827] p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-xs mb-1">Time Slot</p>
-                <p className="text-white font-semibold">
+              <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
+                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Time Slot</p>
+                <p className="text-white font-semibold text-xs sm:text-sm">
                   {selectedAcademicDetails.slot}
                 </p>
               </div>
-              <div className="bg-purple-900/30 border border-purple-600/50 p-4 rounded-lg">
-                <p className="text-purple-300 text-sm">
+              <div className="bg-purple-900/30 border border-purple-600/50 p-3 sm:p-4 rounded-lg">
+                <p className="text-purple-300 text-xs sm:text-sm">
                   🔒 This slot is blocked for academic purposes and cannot be
                   booked.
                 </p>
@@ -1034,7 +1171,7 @@ export default function HomePage() {
                 setShowAcademicModal(false);
                 setSelectedAcademicDetails(null);
               }}
-              className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition"
+              className="mt-4 sm:mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 sm:py-3 rounded-lg transition text-sm sm:text-base"
             >
               Close
             </button>

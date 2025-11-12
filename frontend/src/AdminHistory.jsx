@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import { useNavigate } from 'react-router-dom';
+import { FaBars } from 'react-icons/fa';
 
 // Helper function to format slots display
 function formatSlotsDisplay(slots) {
@@ -30,6 +31,7 @@ export default function AdminHistory() {
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchHistory = async () => {
@@ -57,18 +59,33 @@ export default function AdminHistory() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 p-8 bg-gray-50">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-purple-700">Booking History</h1>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className="flex-1 overflow-x-hidden">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-30">
           <button
-            onClick={() => navigate('/admin-dashboard')}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded"
+            onClick={() => setIsSidebarOpen(true)}
+            className="text-purple-700 hover:text-purple-900"
+            aria-label="Open menu"
           >
-            ← Back to Admin Panel
+            <FaBars size={24} />
           </button>
+          <h2 className="text-lg font-bold text-purple-700">Booking History</h2>
+          <div className="w-6"></div>
         </div>
+
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-purple-700">Booking History</h1>
+            <button
+              onClick={() => navigate('/admin-dashboard')}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded text-sm sm:text-base whitespace-nowrap"
+            >
+              ← Back to Admin Panel
+            </button>
+          </div>
 
         {/* Search Filter */}
         <div className="mb-6">
@@ -77,44 +94,44 @@ export default function AdminHistory() {
             placeholder="Search by room, faculty, or department..."
             value={query}
             onChange={handleSearch}
-            className="w-full max-w-md border border-purple-300 px-4 py-2 rounded shadow focus:ring-2 focus:ring-purple-400 outline-none"
+            className="w-full border border-purple-300 px-4 py-2 rounded shadow focus:ring-2 focus:ring-purple-400 outline-none text-sm sm:text-base"
           />
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-500">Loading history...</p>
+          <p className="text-center text-gray-500 text-sm sm:text-base">Loading history...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-gray-600">No matching results.</p>
+          <p className="text-center text-gray-600 text-sm sm:text-base">No matching results.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border border-gray-200 rounded-xl shadow-md overflow-hidden">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full table-auto border border-gray-200 rounded-xl shadow-md overflow-hidden min-w-[800px]">
               <thead className="bg-purple-100 text-gray-700">
                 <tr>
-                  <th className="p-3 border">Room</th>
-                  <th className="p-3 border">Date</th>
-                  <th className="p-3 border">Slot</th>
-                  <th className="p-3 border">Faculty</th>
-                  <th className="p-3 border">Department</th>
-                  <th className="p-3 border">Reason</th>
-                  <th className="p-3 border">Status</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Room</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Date</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Slot</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Faculty</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Department</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Reason</th>
+                  <th className="p-2 sm:p-3 border text-xs sm:text-sm">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((booking) => (
                   <tr key={booking._id} className="hover:bg-gray-50 transition">
-                    <td className="p-3 border text-center">{booking.room}</td>
-                    <td className="p-3 border text-center">{booking.date}</td>
-                    <td className="p-3 border text-center">
+                    <td className="p-2 sm:p-3 border text-center text-xs sm:text-sm">{booking.room}</td>
+                    <td className="p-2 sm:p-3 border text-center text-xs sm:text-sm">{booking.date}</td>
+                    <td className="p-2 sm:p-3 border text-center text-xs sm:text-sm">
                       {formatSlotsDisplay(booking.slots || [booking.slot])}
                     </td>
-                    <td className="p-3 border text-center">{booking.facultyName}</td>
-                    <td className="p-3 border text-center">{booking.department}</td>
-                    <td className="p-3 border text-center">{booking.reason}</td>
-                    <td className="p-3 border text-center">
+                    <td className="p-2 sm:p-3 border text-center text-xs sm:text-sm">{booking.facultyName}</td>
+                    <td className="p-2 sm:p-3 border text-center text-xs sm:text-sm">{booking.department}</td>
+                    <td className="p-2 sm:p-3 border text-center text-xs sm:text-sm">{booking.reason}</td>
+                    <td className="p-2 sm:p-3 border text-center">
                       {booking.status === 'Approved' ? (
-                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">Approved</span>
+                        <span className="bg-green-100 text-green-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">Approved</span>
                       ) : (
-                        <div className="text-red-600 text-sm font-semibold">
+                        <div className="text-red-600 text-xs sm:text-sm font-semibold">
                           Rejected
                           {booking.rejectionReason && (
                             <div className="text-xs text-gray-500">({booking.rejectionReason})</div>
@@ -128,6 +145,7 @@ export default function AdminHistory() {
             </table>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

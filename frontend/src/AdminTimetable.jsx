@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { useNavigate } from "react-router-dom";
+import { FaBars } from 'react-icons/fa';
 
 export default function AdminTimetable() {
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     branch: "",
@@ -139,8 +141,9 @@ export default function AdminTimetable() {
     return formData.branch === "CSBS" ? csbsSections : cseSections;
   };
 
-  // Theory/Class rooms (for first-time selection)
+  // Theory/Class rooms (for first-time selection) - Organized by floor
   const theoryRooms = [
+    // Ground Floor (E0xx)
     "E003",
     "E004",
     "E005",
@@ -148,21 +151,39 @@ export default function AdminTimetable() {
     "E012 & E013",
     "E032",
     "E033",
-    "E034 (Audi)",
     "E035",
     "E036",
     "E037",
     "E038",
+    // First Floor (E1xx)
+    "E104",
+    "E105",
+    "E106",
+    "E107",
+    "E113 & E114",
+    "E138",
+    "E139",
+    "E140",
+    "E141",
   ];
 
-  // Lab rooms (for lab selection)
+  // Lab rooms (for lab selection) - Organized by floor
   const labRooms = [
+    // Ground Floor (E0xx)
     "E001",
     "E002",
     "E014 & E015",
     "E028",
     "E029",
     "E030 & E031",
+    // First Floor (E1xx)
+    "E101",
+    "E102",
+    "E103",
+    "E115 & E116",
+    "E130",
+    "E131",
+    "E134",
   ];
 
   // Fetch saved section room when year and section are selected
@@ -339,14 +360,29 @@ export default function AdminTimetable() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 p-8">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className="flex-1 overflow-x-hidden">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="text-purple-700 hover:text-purple-900"
+            aria-label="Open menu"
+          >
+            <FaBars size={24} />
+          </button>
+          <h2 className="text-lg font-bold text-purple-700">Add Timetable</h2>
+          <div className="w-6"></div>
+        </div>
+
+        <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-purple-700">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-purple-700">
               Add Timetable Entry
             </h1>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={async () => {
                   if (
@@ -387,13 +423,13 @@ export default function AdminTimetable() {
                     }
                   }
                 }}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded transition"
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 sm:px-4 py-2 rounded transition text-sm sm:text-base whitespace-nowrap"
               >
                 🗑️ Delete All Data
               </button>
               <button
                 onClick={() => navigate("/admin-dashboard")}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded"
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded text-sm sm:text-base whitespace-nowrap"
               >
                 ← Back
               </button>
@@ -401,8 +437,8 @@ export default function AdminTimetable() {
           </div>
 
           {/* Progress Steps */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
+          <div className="mb-8 overflow-x-auto">
+            <div className="flex items-center justify-between min-w-[600px]">
               {[1, 2, 3, 4, 5, 6, 7].map((s) => (
                 <React.Fragment key={s}>
                   <div
@@ -436,14 +472,14 @@ export default function AdminTimetable() {
           </div>
 
           {/* Step Content */}
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
             {/* Step 1: Select Branch */}
             {step === 1 && (
               <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
                   Step 1: Select Branch
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {branches.map((branch) => (
                     <button
                       key={branch}
@@ -469,10 +505,10 @@ export default function AdminTimetable() {
             {/* Step 2: Select Year */}
             {step === 2 && (
               <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
                   Step 2: Select Year
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {years.map((year) => (
                     <button
                       key={year}
@@ -916,7 +952,7 @@ export default function AdminTimetable() {
                   <button
                     onClick={handleSubmit}
                     disabled={!formData.faculty}
-                    className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-lg"
+                    className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-base sm:text-lg transition-colors"
                   >
                     ✅ Submit Timetable Entry
                   </button>
@@ -924,6 +960,7 @@ export default function AdminTimetable() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

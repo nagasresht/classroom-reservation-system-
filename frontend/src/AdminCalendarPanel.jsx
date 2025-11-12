@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
+import { FaBars } from 'react-icons/fa';
 
 export default function AdminCalendarPanel() {
   const [form, setForm] = useState({
@@ -17,6 +18,7 @@ export default function AdminCalendarPanel() {
 
   const [message, setMessage] = useState('');
   const [autoRoom, setAutoRoom] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fullSlots = [
     "9:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
@@ -147,22 +149,37 @@ export default function AdminCalendarPanel() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 bg-gray-50 px-6 py-10">
-        <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-8">
-          <h2 className="text-2xl font-bold mb-6 text-purple-700 text-center">🗓️ Admin Academic Entry</h2>
-          {message && <p className="mb-4 text-center font-semibold">{message}</p>}
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      <div className="flex-1 overflow-x-hidden">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="text-purple-700 hover:text-purple-900"
+            aria-label="Open menu"
+          >
+            <FaBars size={24} />
+          </button>
+          <h2 className="text-lg font-bold text-purple-700">Academic Entry</h2>
+          <div className="w-6"></div>
+        </div>
+
+        <div className="px-4 sm:px-6 py-6 sm:py-10">
+          <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-4 sm:p-6 lg:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold mb-6 text-purple-700 text-center">🗓️ Admin Academic Entry</h2>
+            {message && <p className="mb-4 text-center font-semibold text-sm sm:text-base">{message}</p>}
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <select name="year" value={form.year} onChange={handleChange} required className="border px-4 py-2 rounded shadow">
+            <select name="year" value={form.year} onChange={handleChange} required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base">
               <option value="">Select Year</option>
               <option value="1st Year">1st Year</option>
               <option value="2nd Year">2nd Year</option>
               <option value="3rd Year">3rd Year</option>
               <option value="4th Year">4th Year</option>
             </select>
-            <select name="section" value={form.section} onChange={handleChange} required className="border px-4 py-2 rounded shadow">
+            <select name="section" value={form.section} onChange={handleChange} required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base">
               <option value="">Select Section</option>
               <option value="CSE-1">CSE-1</option>
               <option value="CSE-2">CSE-2</option>
@@ -170,24 +187,24 @@ export default function AdminCalendarPanel() {
               <option value="CSE-4">CSE-4</option>
               <option value="CSBS">CSBS</option>
             </select>
-            <select name="day" value={form.day} onChange={handleChange} required className="border px-4 py-2 rounded shadow">
+            <select name="day" value={form.day} onChange={handleChange} required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base">
               <option value="">Select Day</option>
               {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map(day => (
                 <option key={day} value={day}>{day}</option>
               ))}
             </select>
-            <select name="slot" value={form.slot} onChange={handleChange} required className="border px-4 py-2 rounded shadow">
+            <select name="slot" value={form.slot} onChange={handleChange} required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base">
               <option value="">Select Slot</option>
               {getAvailableSlots().map((s, i) => <option key={i} value={s}>{s}</option>)}
             </select>
-            <select name="type" value={form.type} onChange={handleChange} required className="border px-4 py-2 rounded shadow">
+            <select name="type" value={form.type} onChange={handleChange} required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base">
               <option value="">Select Type</option>
               <option value="Class">Class</option>
               <option value="Lab">Lab</option>
             </select>
 
             {/* Faculty Dropdown */}
-            <select name="faculty" value={form.faculty} onChange={handleChange} required className="border px-4 py-2 rounded shadow">
+            <select name="faculty" value={form.faculty} onChange={handleChange} required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base">
               <option value="">Select Faculty</option>
               {Array.from({ length: 15 }, (_, i) => (
                 <option key={i} value={`Faculty ${i + 1}`}>Faculty {i + 1}</option>
@@ -197,27 +214,28 @@ export default function AdminCalendarPanel() {
             {/* Class inputs */}
             {form.type === "Class" && (
               <>
-                <input name="subject" value={form.subject} onChange={handleChange} placeholder="Subject Name" required className="border px-4 py-2 rounded shadow" />
-                <input value={autoRoom} readOnly placeholder="Auto-fetched Room" className="border px-4 py-2 rounded shadow bg-gray-100 text-gray-600" />
+                <input name="subject" value={form.subject} onChange={handleChange} placeholder="Subject Name" required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base" />
+                <input value={autoRoom} readOnly placeholder="Auto-fetched Room" className="border px-3 sm:px-4 py-2 rounded shadow bg-gray-100 text-gray-600 text-sm sm:text-base" />
               </>
             )}
 
             {/* Lab inputs */}
             {form.type === "Lab" && (
               <>
-                <input name="batch1.name" value={form.batch1.name} onChange={handleChange} placeholder="Batch 1 Lab Name" required className="border px-4 py-2 rounded shadow" />
-                <input name="batch1.room" value={form.batch1.room} onChange={handleChange} placeholder="Batch 1 Room" required className="border px-4 py-2 rounded shadow" />
-                <input name="batch2.name" value={form.batch2.name} onChange={handleChange} placeholder="Batch 2 Lab Name" required className="border px-4 py-2 rounded shadow" />
-                <input name="batch2.room" value={form.batch2.room} onChange={handleChange} placeholder="Batch 2 Room" required className="border px-4 py-2 rounded shadow" />
+                <input name="batch1.name" value={form.batch1.name} onChange={handleChange} placeholder="Batch 1 Lab Name" required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base" />
+                <input name="batch1.room" value={form.batch1.room} onChange={handleChange} placeholder="Batch 1 Room" required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base" />
+                <input name="batch2.name" value={form.batch2.name} onChange={handleChange} placeholder="Batch 2 Lab Name" required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base" />
+                <input name="batch2.room" value={form.batch2.room} onChange={handleChange} placeholder="Batch 2 Room" required className="border px-3 sm:px-4 py-2 rounded shadow text-sm sm:text-base" />
               </>
             )}
 
             <div className="md:col-span-2 flex justify-center mt-4">
-              <button type="submit" className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 shadow">
+              <button type="submit" className="bg-purple-600 text-white px-4 sm:px-6 py-2 rounded hover:bg-purple-700 shadow text-sm sm:text-base transition-colors w-full sm:w-auto">
                 Save Entry
               </button>
             </div>
           </form>
+        </div>
         </div>
       </div>
     </div>
