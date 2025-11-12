@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { useNavigate } from "react-router-dom";
-import { FaBars } from 'react-icons/fa';
+import { FaBars } from "react-icons/fa";
 
 export default function AdminTimetable() {
   const navigate = useNavigate();
@@ -106,8 +106,9 @@ export default function AdminTimetable() {
     "9:00-10:00",
     "10:00-11:00",
     "11:00-12:00",
-    "12:00-12:40", // Break
-    "12:40-1:40",
+    "12:00-12:40", // Lunch break option 1
+    "12:00-1:00", // Lunch break option 2 (overlaps with 12:00-12:40 and 12:40-1:40)
+    "12:40-1:40", // Post-lunch (overlaps with 12:00-1:00)
     "1:40-2:40",
     "2:40-3:40",
   ];
@@ -115,8 +116,9 @@ export default function AdminTimetable() {
   const seniorYearSlots = [
     "10:00-11:00",
     "11:00-12:00",
-    "12:00-1:00",
-    "1:00-1:40", // Break
+    "12:00-12:40", // Lunch break option 1
+    "12:00-1:00", // Lunch break option 2 (overlaps with 12:00-12:40 and 12:40-1:40)
+    "12:40-1:40", // Post-lunch (overlaps with 12:00-1:00)
     "1:40-2:40",
     "2:40-3:40",
     "3:40-4:40",
@@ -208,12 +210,12 @@ export default function AdminTimetable() {
     fetchSectionRoom();
   }, [formData.year, formData.section, formData.type]);
 
-  // Get available slots based on year
+  // Get available slots based on year (all slots are now selectable)
   const getAvailableSlots = () => {
     if (formData.year === "1st Year") {
-      return firstYearSlots.filter((slot) => slot !== "12:00-12:40");
+      return firstYearSlots;
     } else {
-      return seniorYearSlots.filter((slot) => slot !== "1:00-1:40");
+      return seniorYearSlots;
     }
   };
 
@@ -361,7 +363,7 @@ export default function AdminTimetable() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
+
       <div className="flex-1 overflow-x-hidden">
         {/* Mobile Header */}
         <div className="lg:hidden bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-30">
@@ -377,590 +379,595 @@ export default function AdminTimetable() {
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-purple-700">
-              Add Timetable Entry
-            </h1>
-            <div className="flex flex-wrap gap-2 sm:gap-3">
-              <button
-                onClick={async () => {
-                  if (
-                    window.confirm(
-                      "⚠️ WARNING: This will delete ALL timetable entries and section room mappings!\n\nThis action cannot be undone. Are you sure?"
-                    )
-                  ) {
-                    try {
-                      // Delete all academic calendar entries
-                      const res1 = await fetch(
-                        "http://localhost:5000/api/calendar/delete-all",
-                        {
-                          method: "DELETE",
-                        }
-                      );
-                      const data1 = await res1.json();
-
-                      // Delete all section room mappings
-                      const res2 = await fetch(
-                        "http://localhost:5000/api/calendar/delete-all-rooms",
-                        {
-                          method: "DELETE",
-                        }
-                      );
-                      const data2 = await res2.json();
-
-                      if (res1.ok && res2.ok) {
-                        alert(
-                          `✅ Successfully deleted:\n- ${data1.deletedCount} timetable entries\n- ${data2.deletedCount} section room mappings`
+          <div className="max-w-3xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-purple-700">
+                Add Timetable Entry
+              </h1>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <button
+                  onClick={async () => {
+                    if (
+                      window.confirm(
+                        "⚠️ WARNING: This will delete ALL timetable entries and section room mappings!\n\nThis action cannot be undone. Are you sure?"
+                      )
+                    ) {
+                      try {
+                        // Delete all academic calendar entries
+                        const res1 = await fetch(
+                          "http://localhost:5000/api/calendar/delete-all",
+                          {
+                            method: "DELETE",
+                          }
                         );
-                        window.location.reload();
-                      } else {
-                        alert("❌ Failed to delete some data");
+                        const data1 = await res1.json();
+
+                        // Delete all section room mappings
+                        const res2 = await fetch(
+                          "http://localhost:5000/api/calendar/delete-all-rooms",
+                          {
+                            method: "DELETE",
+                          }
+                        );
+                        const data2 = await res2.json();
+
+                        if (res1.ok && res2.ok) {
+                          alert(
+                            `✅ Successfully deleted:\n- ${data1.deletedCount} timetable entries\n- ${data2.deletedCount} section room mappings`
+                          );
+                          window.location.reload();
+                        } else {
+                          alert("❌ Failed to delete some data");
+                        }
+                      } catch (error) {
+                        console.error(error);
+                        alert("❌ Error deleting data");
                       }
-                    } catch (error) {
-                      console.error(error);
-                      alert("❌ Error deleting data");
                     }
-                  }
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 sm:px-4 py-2 rounded transition text-sm sm:text-base whitespace-nowrap"
-              >
-                🗑️ Delete All Data
-              </button>
-              <button
-                onClick={() => navigate("/admin-dashboard")}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded text-sm sm:text-base whitespace-nowrap"
-              >
-                ← Back
-              </button>
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 sm:px-4 py-2 rounded transition text-sm sm:text-base whitespace-nowrap"
+                >
+                  🗑️ Delete All Data
+                </button>
+                <button
+                  onClick={() => navigate("/admin-dashboard")}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded text-sm sm:text-base whitespace-nowrap"
+                >
+                  ← Back
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Progress Steps */}
-          <div className="mb-8 overflow-x-auto">
-            <div className="flex items-center justify-between min-w-[600px]">
-              {[1, 2, 3, 4, 5, 6, 7].map((s) => (
-                <React.Fragment key={s}>
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                      step >= s
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-300 text-gray-600"
-                    }`}
-                  >
-                    {s}
-                  </div>
-                  {s < 7 && (
+            {/* Progress Steps */}
+            <div className="mb-8 overflow-x-auto">
+              <div className="flex items-center justify-between min-w-[600px]">
+                {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+                  <React.Fragment key={s}>
                     <div
-                      className={`flex-1 h-1 ${
-                        step > s ? "bg-purple-600" : "bg-gray-300"
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                        step >= s
+                          ? "bg-purple-600 text-white"
+                          : "bg-gray-300 text-gray-600"
                       }`}
-                    />
-                  )}
-                </React.Fragment>
-              ))}
+                    >
+                      {s}
+                    </div>
+                    {s < 7 && (
+                      <div
+                        className={`flex-1 h-1 ${
+                          step > s ? "bg-purple-600" : "bg-gray-300"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-gray-600">
+                <span>Branch</span>
+                <span>Year</span>
+                <span>Section</span>
+                <span>Day</span>
+                <span>Type</span>
+                <span>Details</span>
+                <span>Faculty</span>
+              </div>
             </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-600">
-              <span>Branch</span>
-              <span>Year</span>
-              <span>Section</span>
-              <span>Day</span>
-              <span>Type</span>
-              <span>Details</span>
-              <span>Faculty</span>
-            </div>
-          </div>
 
-          {/* Step Content */}
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
-            {/* Step 1: Select Branch */}
-            {step === 1 && (
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
-                  Step 1: Select Branch
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {branches.map((branch) => (
-                    <button
-                      key={branch}
-                      onClick={() => {
-                        handleChange("branch", branch);
-                        // Reset section when branch changes
-                        handleChange("section", "");
-                        handleNext();
-                      }}
-                      className={`p-6 rounded-lg border-2 font-semibold text-lg transition-all ${
-                        formData.branch === branch
-                          ? "border-purple-600 bg-purple-50 text-purple-700"
-                          : "border-gray-300 hover:border-purple-400"
-                      }`}
-                    >
-                      {branch}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Select Year */}
-            {step === 2 && (
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
-                  Step 2: Select Year
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {years.map((year) => (
-                    <button
-                      key={year}
-                      onClick={() => {
-                        handleChange("year", year);
-                        handleNext();
-                      }}
-                      className={`p-6 rounded-lg border-2 font-semibold text-lg transition-all ${
-                        formData.year === year
-                          ? "border-purple-600 bg-purple-50 text-purple-700"
-                          : "border-gray-300 hover:border-purple-400"
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handleBack}
-                  className="mt-4 text-purple-600 hover:text-purple-800"
-                >
-                  ← Back
-                </button>
-              </div>
-            )}
-
-            {/* Step 3: Select Section */}
-            {step === 3 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
-                  Step 3: Select Section
-                </h2>
-                <div
-                  className={`grid gap-4 ${
-                    formData.branch === "CSBS"
-                      ? "grid-cols-1 max-w-xs"
-                      : "grid-cols-4"
-                  }`}
-                >
-                  {getSections().map((section) => (
-                    <button
-                      key={section}
-                      onClick={() => {
-                        handleChange("section", section);
-                        handleNext();
-                      }}
-                      className={`p-6 rounded-lg border-2 font-semibold text-lg transition-all ${
-                        formData.section === section
-                          ? "border-purple-600 bg-purple-50 text-purple-700"
-                          : "border-gray-300 hover:border-purple-400"
-                      }`}
-                    >
-                      Section {section}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handleBack}
-                  className="mt-4 text-purple-600 hover:text-purple-800"
-                >
-                  ← Back
-                </button>
-              </div>
-            )}
-
-            {/* Step 4: Select Day */}
-            {step === 4 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
-                  Step 4: Select Day
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {days.map((day) => (
-                    <button
-                      key={day}
-                      onClick={() => {
-                        handleChange("day", day);
-                        handleNext();
-                      }}
-                      className={`p-4 rounded-lg border-2 font-semibold transition-all ${
-                        formData.day === day
-                          ? "border-purple-600 bg-purple-50 text-purple-700"
-                          : "border-gray-300 hover:border-purple-400"
-                      }`}
-                    >
-                      {day}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handleBack}
-                  className="mt-4 text-purple-600 hover:text-purple-800"
-                >
-                  ← Back
-                </button>
-              </div>
-            )}
-
-            {/* Step 5: Select Type (Class or Lab) */}
-            {step === 5 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
-                  Step 5: Select Type
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {types.map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        handleChange("type", type);
-                        handleNext();
-                      }}
-                      className={`p-8 rounded-lg border-2 font-semibold text-xl transition-all ${
-                        formData.type === type
-                          ? "border-purple-600 bg-purple-50 text-purple-700"
-                          : "border-gray-300 hover:border-purple-400"
-                      }`}
-                    >
-                      {type === "Class" ? "📚 Class" : "🔬 Lab"}
-                      <div className="text-sm text-gray-600 mt-2">
-                        {type === "Class" ? "1 hour slot" : "3 hour block"}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handleBack}
-                  className="mt-4 text-purple-600 hover:text-purple-800"
-                >
-                  ← Back
-                </button>
-              </div>
-            )}
-
-            {/* Step 6: Enter Details (Subject, Room, Slot) */}
-            {step === 6 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
-                  Step 6: Enter Details
-                </h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Subject Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.subject}
-                      onChange={(e) => handleChange("subject", e.target.value)}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      placeholder="e.g., Data Structures"
-                    />
+            {/* Step Content */}
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
+              {/* Step 1: Select Branch */}
+              {step === 1 && (
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
+                    Step 1: Select Branch
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {branches.map((branch) => (
+                      <button
+                        key={branch}
+                        onClick={() => {
+                          handleChange("branch", branch);
+                          // Reset section when branch changes
+                          handleChange("section", "");
+                          handleNext();
+                        }}
+                        className={`p-6 rounded-lg border-2 font-semibold text-lg transition-all ${
+                          formData.branch === branch
+                            ? "border-purple-600 bg-purple-50 text-purple-700"
+                            : "border-gray-300 hover:border-purple-400"
+                        }`}
+                      >
+                        {branch}
+                      </button>
+                    ))}
                   </div>
-
-                  {formData.type === "Lab" ? (
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Lab Room
-                      </label>
-                      <select
-                        value={formData.room}
-                        onChange={(e) => handleChange("room", e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      >
-                        <option value="">Select Lab Room</option>
-                        {labRooms.map((room) => (
-                          <option key={room} value={room}>
-                            {room}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : savedSectionRoom && !allowRoomChange ? (
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Classroom (Saved)
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={savedSectionRoom}
-                          disabled
-                          className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-600 cursor-not-allowed"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAllowRoomChange(true);
-                            handleChange("room", "");
-                          }}
-                          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition whitespace-nowrap"
-                        >
-                          Change Room
-                        </button>
-                      </div>
-                      <p className="text-xs text-green-600 mt-1">
-                        ✓ Using saved classroom for {formData.year} Section{" "}
-                        {formData.section}
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        {savedSectionRoom
-                          ? "Update Classroom"
-                          : "Select Classroom (First Time)"}
-                      </label>
-                      <select
-                        value={formData.room}
-                        onChange={(e) => handleChange("room", e.target.value)}
-                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      >
-                        <option value="">Select Theory Room</option>
-                        {theoryRooms.map((room) => (
-                          <option key={room} value={room}>
-                            {room}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-blue-600 mt-1">
-                        {savedSectionRoom
-                          ? `Changing classroom for ${formData.year} Section ${formData.section}. This will update all future entries.`
-                          : `This room will be saved for all future classes of ${formData.year} Section ${formData.section}`}
-                      </p>
-                      {savedSectionRoom && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAllowRoomChange(false);
-                            handleChange("room", savedSectionRoom);
-                          }}
-                          className="mt-2 text-sm text-purple-600 hover:text-purple-800"
-                        >
-                          ← Cancel, keep {savedSectionRoom}
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {formData.type === "Lab" ? (
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Lab Slot (3 hours)
-                      </label>
-                      <select
-                        value={formData.labSlot}
-                        onChange={(e) =>
-                          handleChange("labSlot", e.target.value)
-                        }
-                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      >
-                        <option value="">Select Lab Slot</option>
-                        {getLabSlots().map((slot) => (
-                          <option key={slot.value} value={slot.value}>
-                            {slot.label}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-2">
-                        This will occupy 3 consecutive hours
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Time Slot (1 hour)
-                      </label>
-                      <select
-                        value={formData.classSlot}
-                        onChange={(e) =>
-                          handleChange("classSlot", e.target.value)
-                        }
-                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                      >
-                        <option value="">Select Time Slot</option>
-                        {getAvailableSlots().map((slot) => (
-                          <option key={slot} value={slot}>
-                            {slot}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                 </div>
+              )}
 
-                <div className="mt-6 flex gap-4">
+              {/* Step 2: Select Year */}
+              {step === 2 && (
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">
+                    Step 2: Select Year
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {years.map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => {
+                          handleChange("year", year);
+                          handleNext();
+                        }}
+                        className={`p-6 rounded-lg border-2 font-semibold text-lg transition-all ${
+                          formData.year === year
+                            ? "border-purple-600 bg-purple-50 text-purple-700"
+                            : "border-gray-300 hover:border-purple-400"
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
                   <button
                     onClick={handleBack}
-                    className="text-purple-600 hover:text-purple-800"
+                    className="mt-4 text-purple-600 hover:text-purple-800"
                   >
                     ← Back
                   </button>
-                  <button
-                    onClick={handleNext}
-                    disabled={
-                      !formData.subject ||
-                      (formData.type === "Lab"
-                        ? !formData.room || !formData.labSlot
-                        : !formData.classSlot ||
-                          (!savedSectionRoom && !formData.room))
-                    }
-                    className="flex-1 bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                </div>
+              )}
+
+              {/* Step 3: Select Section */}
+              {step === 3 && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4 text-gray-800">
+                    Step 3: Select Section
+                  </h2>
+                  <div
+                    className={`grid gap-4 ${
+                      formData.branch === "CSBS"
+                        ? "grid-cols-1 max-w-xs"
+                        : "grid-cols-4"
+                    }`}
                   >
-                    Next
+                    {getSections().map((section) => (
+                      <button
+                        key={section}
+                        onClick={() => {
+                          handleChange("section", section);
+                          handleNext();
+                        }}
+                        className={`p-6 rounded-lg border-2 font-semibold text-lg transition-all ${
+                          formData.section === section
+                            ? "border-purple-600 bg-purple-50 text-purple-700"
+                            : "border-gray-300 hover:border-purple-400"
+                        }`}
+                      >
+                        Section {section}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleBack}
+                    className="mt-4 text-purple-600 hover:text-purple-800"
+                  >
+                    ← Back
                   </button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Step 7: Select Faculty */}
-            {step === 7 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
-                  Step 7: Select Faculty
-                </h2>
+              {/* Step 4: Select Day */}
+              {step === 4 && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4 text-gray-800">
+                    Step 4: Select Day
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {days.map((day) => (
+                      <button
+                        key={day}
+                        onClick={() => {
+                          handleChange("day", day);
+                          handleNext();
+                        }}
+                        className={`p-4 rounded-lg border-2 font-semibold transition-all ${
+                          formData.day === day
+                            ? "border-purple-600 bg-purple-50 text-purple-700"
+                            : "border-gray-300 hover:border-purple-400"
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleBack}
+                    className="mt-4 text-purple-600 hover:text-purple-800"
+                  >
+                    ← Back
+                  </button>
+                </div>
+              )}
 
-                <div className="mb-6 relative">
-                  <label className="block text-sm font-semibold mb-2">
-                    Faculty Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.faculty || facultySearch}
-                    onChange={(e) => {
-                      setFacultySearch(e.target.value);
-                      handleChange("faculty", ""); // Clear selection when typing
-                      setShowFacultyDropdown(true);
-                    }}
-                    onFocus={() => setShowFacultyDropdown(true)}
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
-                    placeholder="Type to search faculty..."
-                  />
+              {/* Step 5: Select Type (Class or Lab) */}
+              {step === 5 && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4 text-gray-800">
+                    Step 5: Select Type
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    {types.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          handleChange("type", type);
+                          handleNext();
+                        }}
+                        className={`p-8 rounded-lg border-2 font-semibold text-xl transition-all ${
+                          formData.type === type
+                            ? "border-purple-600 bg-purple-50 text-purple-700"
+                            : "border-gray-300 hover:border-purple-400"
+                        }`}
+                      >
+                        {type === "Class" ? "📚 Class" : "🔬 Lab"}
+                        <div className="text-sm text-gray-600 mt-2">
+                          {type === "Class" ? "1 hour slot" : "3 hour block"}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleBack}
+                    className="mt-4 text-purple-600 hover:text-purple-800"
+                  >
+                    ← Back
+                  </button>
+                </div>
+              )}
 
-                  {/* Dropdown list */}
-                  {showFacultyDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {facultyList
-                        .filter((faculty) =>
+              {/* Step 6: Enter Details (Subject, Room, Slot) */}
+              {step === 6 && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4 text-gray-800">
+                    Step 6: Enter Details
+                  </h2>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        Subject Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.subject}
+                        onChange={(e) =>
+                          handleChange("subject", e.target.value)
+                        }
+                        className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                        placeholder="e.g., Data Structures"
+                      />
+                    </div>
+
+                    {formData.type === "Lab" ? (
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Lab Room
+                        </label>
+                        <select
+                          value={formData.room}
+                          onChange={(e) => handleChange("room", e.target.value)}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                        >
+                          <option value="">Select Lab Room</option>
+                          {labRooms.map((room) => (
+                            <option key={room} value={room}>
+                              {room}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : savedSectionRoom && !allowRoomChange ? (
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Classroom (Saved)
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={savedSectionRoom}
+                            disabled
+                            className="flex-1 border-2 border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-600 cursor-not-allowed"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAllowRoomChange(true);
+                              handleChange("room", "");
+                            }}
+                            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition whitespace-nowrap"
+                          >
+                            Change Room
+                          </button>
+                        </div>
+                        <p className="text-xs text-green-600 mt-1">
+                          ✓ Using saved classroom for {formData.year} Section{" "}
+                          {formData.section}
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          {savedSectionRoom
+                            ? "Update Classroom"
+                            : "Select Classroom (First Time)"}
+                        </label>
+                        <select
+                          value={formData.room}
+                          onChange={(e) => handleChange("room", e.target.value)}
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                        >
+                          <option value="">Select Theory Room</option>
+                          {theoryRooms.map((room) => (
+                            <option key={room} value={room}>
+                              {room}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {savedSectionRoom
+                            ? `Changing classroom for ${formData.year} Section ${formData.section}. This will update all future entries.`
+                            : `This room will be saved for all future classes of ${formData.year} Section ${formData.section}`}
+                        </p>
+                        {savedSectionRoom && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAllowRoomChange(false);
+                              handleChange("room", savedSectionRoom);
+                            }}
+                            className="mt-2 text-sm text-purple-600 hover:text-purple-800"
+                          >
+                            ← Cancel, keep {savedSectionRoom}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {formData.type === "Lab" ? (
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Lab Slot (3 hours)
+                        </label>
+                        <select
+                          value={formData.labSlot}
+                          onChange={(e) =>
+                            handleChange("labSlot", e.target.value)
+                          }
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                        >
+                          <option value="">Select Lab Slot</option>
+                          {getLabSlots().map((slot) => (
+                            <option key={slot.value} value={slot.value}>
+                              {slot.label}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-2">
+                          This will occupy 3 consecutive hours
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Time Slot (1 hour)
+                        </label>
+                        <select
+                          value={formData.classSlot}
+                          onChange={(e) =>
+                            handleChange("classSlot", e.target.value)
+                          }
+                          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                        >
+                          <option value="">Select Time Slot</option>
+                          {getAvailableSlots().map((slot) => (
+                            <option key={slot} value={slot}>
+                              {slot}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex gap-4">
+                    <button
+                      onClick={handleBack}
+                      className="text-purple-600 hover:text-purple-800"
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      disabled={
+                        !formData.subject ||
+                        (formData.type === "Lab"
+                          ? !formData.room || !formData.labSlot
+                          : !formData.classSlot ||
+                            (!savedSectionRoom && !formData.room))
+                      }
+                      className="flex-1 bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 7: Select Faculty */}
+              {step === 7 && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4 text-gray-800">
+                    Step 7: Select Faculty
+                  </h2>
+
+                  <div className="mb-6 relative">
+                    <label className="block text-sm font-semibold mb-2">
+                      Faculty Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.faculty || facultySearch}
+                      onChange={(e) => {
+                        setFacultySearch(e.target.value);
+                        handleChange("faculty", ""); // Clear selection when typing
+                        setShowFacultyDropdown(true);
+                      }}
+                      onFocus={() => setShowFacultyDropdown(true)}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-purple-600 focus:outline-none"
+                      placeholder="Type to search faculty..."
+                    />
+
+                    {/* Dropdown list */}
+                    {showFacultyDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {facultyList
+                          .filter((faculty) =>
+                            faculty
+                              .toLowerCase()
+                              .includes(
+                                (
+                                  formData.faculty || facultySearch
+                                ).toLowerCase()
+                              )
+                          )
+                          .map((faculty, index) => (
+                            <div
+                              key={index}
+                              onClick={() => {
+                                handleChange("faculty", faculty);
+                                setFacultySearch("");
+                                setShowFacultyDropdown(false);
+                              }}
+                              className="px-4 py-2 hover:bg-purple-100 cursor-pointer border-b border-gray-200 last:border-b-0"
+                            >
+                              {faculty}
+                            </div>
+                          ))}
+                        {facultyList.filter((faculty) =>
                           faculty
                             .toLowerCase()
                             .includes(
                               (formData.faculty || facultySearch).toLowerCase()
                             )
-                        )
-                        .map((faculty, index) => (
-                          <div
-                            key={index}
-                            onClick={() => {
-                              handleChange("faculty", faculty);
-                              setFacultySearch("");
-                              setShowFacultyDropdown(false);
-                            }}
-                            className="px-4 py-2 hover:bg-purple-100 cursor-pointer border-b border-gray-200 last:border-b-0"
-                          >
-                            {faculty}
+                        ).length === 0 && (
+                          <div className="px-4 py-2 text-gray-500 text-center">
+                            No faculty found
                           </div>
-                        ))}
-                      {facultyList.filter((faculty) =>
-                        faculty
-                          .toLowerCase()
-                          .includes(
-                            (formData.faculty || facultySearch).toLowerCase()
-                          )
-                      ).length === 0 && (
-                        <div className="px-4 py-2 text-gray-500 text-center">
-                          No faculty found
-                        </div>
-                      )}
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Summary */}
+                  <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-6 mb-6">
+                    <h3 className="font-bold text-lg mb-4 text-purple-800">
+                      📋 Summary
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-semibold">Branch:</span>{" "}
+                        {formData.branch}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Year:</span>{" "}
+                        {formData.year}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Section:</span>{" "}
+                        {formData.section}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Day:</span>{" "}
+                        {formData.day}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Type:</span>{" "}
+                        {formData.type}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Subject:</span>{" "}
+                        {formData.subject}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Room:</span>{" "}
+                        {formData.room}
+                      </div>
+                      <div className="col-span-2">
+                        <span className="font-semibold">Time:</span>{" "}
+                        {formData.type === "Lab"
+                          ? getLabSlots().find(
+                              (ls) => ls.value === formData.labSlot
+                            )?.label
+                          : formData.classSlot}
+                      </div>
+                      <div className="col-span-2">
+                        <span className="font-semibold">Faculty:</span>{" "}
+                        {formData.faculty || "Not specified"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {message && (
+                    <div
+                      className={`p-4 rounded-lg mb-4 ${
+                        message.includes("✅")
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {message}
                     </div>
                   )}
-                </div>
 
-                {/* Summary */}
-                <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-6 mb-6">
-                  <h3 className="font-bold text-lg mb-4 text-purple-800">
-                    📋 Summary
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-semibold">Branch:</span>{" "}
-                      {formData.branch}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Year:</span>{" "}
-                      {formData.year}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Section:</span>{" "}
-                      {formData.section}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Day:</span> {formData.day}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Type:</span>{" "}
-                      {formData.type}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Subject:</span>{" "}
-                      {formData.subject}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Room:</span>{" "}
-                      {formData.room}
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-semibold">Time:</span>{" "}
-                      {formData.type === "Lab"
-                        ? getLabSlots().find(
-                            (ls) => ls.value === formData.labSlot
-                          )?.label
-                        : formData.classSlot}
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-semibold">Faculty:</span>{" "}
-                      {formData.faculty || "Not specified"}
-                    </div>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleBack}
+                      className="text-purple-600 hover:text-purple-800"
+                    >
+                      ← Back
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!formData.faculty}
+                      className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-base sm:text-lg transition-colors"
+                    >
+                      ✅ Submit Timetable Entry
+                    </button>
                   </div>
                 </div>
-
-                {message && (
-                  <div
-                    className={`p-4 rounded-lg mb-4 ${
-                      message.includes("✅")
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {message}
-                  </div>
-                )}
-
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleBack}
-                    className="text-purple-600 hover:text-purple-800"
-                  >
-                    ← Back
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!formData.faculty}
-                    className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-base sm:text-lg transition-colors"
-                  >
-                    ✅ Submit Timetable Entry
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </div>

@@ -50,7 +50,25 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  rejectionReason: String
+  rejectionReason: String,
+  approvedBy: {
+    type: String,
+    default: null
+  },
+  approvedByEmail: {
+    type: String,
+    default: null
+  },
+  appliedBy: {
+    type: String,
+    required: false,
+    default: null
+  },
+  appliedByEmail: {
+    type: String,
+    required: false,
+    default: null
+  }
 }, { timestamps: true });
 
 // Note: Removed unique indexes as they don't work well with arrays

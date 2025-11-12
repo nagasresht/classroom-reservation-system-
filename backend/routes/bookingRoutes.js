@@ -3,6 +3,8 @@ const router = express.Router();
 const Booking = require('../models/Booking');
 const Notification = require('../models/Notification');
 
+console.log('🔥 BOOKING ROUTES LOADED - Code is active!');
+
 router.post('/book', async (req, res) => {
   try {
     console.log('📝 New booking request received:', req.body);
@@ -53,7 +55,9 @@ router.post('/book', async (req, res) => {
     // Create booking with multiple slots
     const booking = new Booking({
       ...restData,
-      slots: slotsArray
+      slots: slotsArray,
+      appliedBy: restData.facultyName,
+      appliedByEmail: restData.email
     });
     
     console.log('💾 Saving booking with data:', {
@@ -61,7 +65,8 @@ router.post('/book', async (req, res) => {
       date: booking.date,
       slots: booking.slots,
       status: booking.status,
-      email: booking.email
+      email: booking.email,
+      appliedBy: booking.appliedBy
     });
     
     await booking.save();
@@ -108,11 +113,23 @@ router.get('/bookings', async (req, res) => {
 
 router.patch('/bookings/:id', async (req, res) => {
   try {
-    const { status, rejectionReason } = req.body;
+    const { status, rejectionReason, approvedBy, approvedByEmail } = req.body;
+    
+    console.log('📥 Received PATCH request for booking:', req.params.id);
+    console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+    
     const target = await Booking.findById(req.params.id);
     if (!target) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+    
+    console.log('📋 Current booking before update:', {
+      id: target._id,
+      room: target.room,
+      status: target.status,
+      appliedBy: target.appliedBy,
+      approvedBy: target.approvedBy
+    });
 
     if (status === 'Approved') {
       // Check if any of the slots in this booking are already approved
@@ -135,7 +152,16 @@ router.patch('/bookings/:id', async (req, res) => {
 
     target.status = status;
     if (status === 'Rejected') target.rejectionReason = rejectionReason || '';
+    
+    // Save who approved/rejected the booking
+    if (status === 'Approved' || status === 'Rejected') {
+      target.approvedBy = approvedBy || 'Admin';
+      target.approvedByEmail = approvedByEmail || '';
+      console.log('💾 Saving approvedBy:', target.approvedBy, 'Email:', target.approvedByEmail);
+    }
+    
     await target.save();
+    console.log('✅ Booking updated. ApprovedBy field:', target.approvedBy);
 
     // Format slots for display (show as range if consecutive)
     const slotsDisplay = formatSlotsForDisplay(target.slots);

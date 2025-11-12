@@ -60,11 +60,20 @@ const timeSlots = [
   "9:00-10:00",
   "10:00-11:00",
   "11:00-12:00",
-  "12:00-1:40",
+  "12:00-12:40",
+  "12:00-1:00",
+  "12:40-1:40",
   "1:40-2:40",
   "2:40-3:40",
   "3:40-4:40",
 ];
+
+// Define overlapping slots that cannot be selected together
+const overlappingSlots = {
+  "12:00-12:40": ["12:00-1:00"],
+  "12:00-1:00": ["12:00-12:40", "12:40-1:40"],
+  "12:40-1:40": ["12:00-1:00"],
+};
 
 const facultyList = [
   "Dr. Vadlana Baby",
@@ -168,7 +177,7 @@ export default function HomePage() {
 
   const [selectedDate, setSelectedDate] = useState(getInitialDate());
   const [activeTab, setActiveTab] = useState("Rooms");
-  const [selectedFloor, setSelectedFloor] = useState("All"); // NEW: Floor filter
+  const [selectedFloor, setSelectedFloor] = useState("Ground"); // Default to Ground floor
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedFaculty, setSelectedFaculty] = useState(facultyList[0]);
   const [selectedSlots, setSelectedSlots] = useState([]); // NEW: Track multiple selected slots
@@ -180,17 +189,68 @@ export default function HomePage() {
   const [showAcademicModal, setShowAcademicModal] = useState(false);
   const [selectedAcademicDetails, setSelectedAcademicDetails] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [toastNotifications, setToastNotifications] = useState([]);
 
   const dropdownRef = useRef(null);
   const facultyDropdownRef = useRef(null);
 
   const [bookings, setBookings] = useState([]);
   const [academicSlots, setAcademicSlots] = useState([]);
+  const [previousBookings, setPreviousBookings] = useState([]);
+
+  // Function to show toast notification
+  const showToast = (message, type) => {
+    const id = Date.now();
+    setToastNotifications((prev) => [...prev, { id, message, type }]);
+
+    // Auto remove after 8 seconds
+    setTimeout(() => {
+      setToastNotifications((prev) => prev.filter((toast) => toast.id !== id));
+    }, 8000);
+  };
 
   const fetchBookings = async () => {
-    const res = await fetch("http://localhost:5000/api/bookings");
-    const data = await res.json();
-    setBookings(data);
+    try {
+      const res = await fetch("http://localhost:5000/api/bookings");
+      const data = await res.json();
+
+      // Check for status changes (only for current user's bookings)
+      setPreviousBookings((prev) => {
+        if (prev.length > 0) {
+          data.forEach((booking) => {
+            if (booking.email === user.email) {
+              const oldBooking = prev.find((b) => b._id === booking._id);
+              if (oldBooking && oldBooking.status !== booking.status) {
+                // Status changed - show toast
+                console.log(
+                  `🔔 Status changed for booking ${booking._id}: ${oldBooking.status} → ${booking.status}`
+                );
+                if (booking.status === "Approved") {
+                  showToast(
+                    `✅ Your booking for ${booking.room} on ${new Date(
+                      booking.date
+                    ).toLocaleDateString()} has been approved!`,
+                    "success"
+                  );
+                } else if (booking.status === "Rejected") {
+                  showToast(
+                    `❌ Your booking for ${booking.room} on ${new Date(
+                      booking.date
+                    ).toLocaleDateString()} has been rejected.`,
+                    "error"
+                  );
+                }
+              }
+            }
+          });
+        }
+        return data; // Update previous bookings with current data
+      });
+
+      setBookings(data);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
   };
 
   const fetchCalendar = async () => {
@@ -202,6 +262,13 @@ export default function HomePage() {
   useEffect(() => {
     fetchBookings();
     fetchCalendar();
+
+    // Poll for booking status changes every 5 seconds
+    const interval = setInterval(() => {
+      fetchBookings();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Close dropdown when clicking outside
@@ -286,17 +353,19 @@ export default function HomePage() {
     if (slots.length === 1) return slots[0];
 
     const sortedSlots = [...slots].sort();
-    const timeSlots = [
+    const timeSlotsOrder = [
       "9:00-10:00",
       "10:00-11:00",
       "11:00-12:00",
-      "12:00-1:40",
+      "12:00-12:40",
+      "12:00-1:00",
+      "12:40-1:40",
       "1:40-2:40",
       "2:40-3:40",
       "3:40-4:40",
     ];
 
-    const indices = sortedSlots.map((slot) => timeSlots.indexOf(slot));
+    const indices = sortedSlots.map((slot) => timeSlotsOrder.indexOf(slot));
     const allConsecutive = indices.every(
       (val, i, arr) => i === 0 || val === arr[i - 1] + 1
     );
@@ -349,12 +418,54 @@ export default function HomePage() {
     return "Pending";
   };
 
-  // NEW: Toggle slot selection
+  // Check if a slot is disabled due to overlap with selected slots OR booked overlapping slots
+  const isSlotDisabledByOverlap = (slot) => {
+    // Check if any selected slot overlaps with this slot
+    const hasSelectedOverlap = selectedSlots.some((selectedSlot) => {
+      const overlaps = overlappingSlots[selectedSlot] || [];
+      return overlaps.includes(slot);
+    });
+
+    if (hasSelectedOverlap) return true;
+
+    // Check if any BOOKED/APPROVED slot overlaps with this slot
+    const bookedSlots = bookings
+      .filter(
+        (b) =>
+          b.room === selectedRoom?.name &&
+          b.date === selectedDate &&
+          (b.status === "Approved" || b.status === "Pending")
+      )
+      .flatMap((b) => b.slots || []);
+
+    // For each booked slot, check if it overlaps with the current slot
+    const hasBookedOverlap = bookedSlots.some((bookedSlot) => {
+      const overlaps = overlappingSlots[bookedSlot] || [];
+      return overlaps.includes(slot) || bookedSlot === slot;
+    });
+
+    return hasBookedOverlap;
+  };
+
+  // NEW: Toggle slot selection with overlap detection (no alerts, visual only)
   const toggleSlotSelection = (slot) => {
     setSelectedSlots((prev) => {
       if (prev.includes(slot)) {
+        // If slot is already selected, deselect it
         return prev.filter((s) => s !== slot);
       } else {
+        // Check if the slot is disabled due to overlap
+        const isDisabled = prev.some((selectedSlot) => {
+          const overlaps = overlappingSlots[selectedSlot] || [];
+          return overlaps.includes(slot);
+        });
+
+        // If disabled, don't select it (just ignore the click)
+        if (isDisabled) {
+          return prev;
+        }
+
+        // No overlap, add the slot
         return [...prev, slot];
       }
     });
@@ -480,22 +591,20 @@ export default function HomePage() {
     let typeMatch = false;
     if (activeTab === "Rooms") typeMatch = room.type === "Theory";
     if (activeTab === "Labs") typeMatch = room.type === "Lab";
-    
+
     if (!typeMatch) return false;
 
     // Filter by floor
-    if (selectedFloor === "All") return true;
-    
     // Ground Floor: rooms starting with E0 (E001, E002, E003, etc.)
     if (selectedFloor === "Ground") {
       return room.name.startsWith("E0");
     }
-    
+
     // First Floor: rooms starting with E1 (E101, E102, E138, etc.)
     if (selectedFloor === "First") {
       return room.name.startsWith("E1");
     }
-    
+
     return true;
   });
 
@@ -528,13 +637,22 @@ export default function HomePage() {
             Classroom<span className="text-[#3B82F6]">Hub</span>
           </h1>
         </div>
-        
+
         {/* Desktop Menu */}
         <div className="hidden lg:flex items-center gap-4">
           <span className="text-sm flex items-center gap-2 text-[#9CA3AF] bg-[#1F2937] px-4 py-2 rounded-lg border border-[#374151]">
             <FaCalendarAlt className="text-[#3B82F6]" />{" "}
             {new Date().toLocaleDateString()}
           </span>
+
+          {/* Booking History Button */}
+          <button
+            onClick={() => setShowBookingHistory(true)}
+            className="text-sm flex items-center gap-2 bg-gradient-to-r from-[#10B981] to-[#059669] text-white px-4 py-2 rounded-lg shadow-lg shadow-[#10B981]/50 hover:shadow-[#10B981]/70 transition-all transform hover:scale-105 font-medium"
+          >
+            <FaHistory />
+            My Bookings
+          </button>
 
           {/* User Dropdown */}
           <div className="relative" ref={dropdownRef}>
@@ -562,16 +680,6 @@ export default function HomePage() {
                 >
                   <FaUserCircle className="text-[#3B82F6]" />
                   Profile
-                </button>
-                <button
-                  onClick={() => {
-                    setShowBookingHistory(true);
-                    setShowUserDropdown(false);
-                  }}
-                  className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-t border-[#374151]"
-                >
-                  <FaHistory className="text-[#3B82F6]" />
-                  Booking History
                 </button>
                 <button
                   onClick={handleLogout}
@@ -619,16 +727,6 @@ export default function HomePage() {
           >
             <FaUserCircle className="text-[#3B82F6]" />
             Profile
-          </button>
-          <button
-            onClick={() => {
-              setShowBookingHistory(true);
-              setShowMobileMenu(false);
-            }}
-            className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-b border-[#374151]"
-          >
-            <FaHistory className="text-[#3B82F6]" />
-            Booking History
           </button>
           <button
             onClick={handleLogout}
@@ -681,7 +779,13 @@ export default function HomePage() {
               {tab === "Rooms" && <FaDoorOpen className="text-xs sm:text-sm" />}
               {tab === "Labs" && <FaFlask className="text-xs sm:text-sm" />}
               <span className="hidden sm:inline">{tab}</span>
-              <span className="sm:hidden">{tab === "Rooms" ? "Rooms" : tab === "Labs" ? "Labs" : "Faculty"}</span>
+              <span className="sm:hidden">
+                {tab === "Rooms"
+                  ? "Rooms"
+                  : tab === "Labs"
+                  ? "Labs"
+                  : "Faculty"}
+              </span>
             </button>
           ))}
         </div>
@@ -691,7 +795,7 @@ export default function HomePage() {
       {activeTab !== "Faculty" && (
         <div className="flex justify-center mb-6 sm:mb-8">
           <div className="inline-flex bg-[#1F2937] border border-[#374151] rounded-lg shadow-lg p-1 w-full sm:w-auto max-w-md">
-            {["All", "Ground", "First"].map((floor) => (
+            {["Ground", "First"].map((floor) => (
               <button
                 key={floor}
                 className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-xs sm:text-sm transition-all ${
@@ -704,7 +808,6 @@ export default function HomePage() {
                   setSelectedRoom(null);
                 }}
               >
-                {floor === "All" && "All Floors"}
                 {floor === "Ground" && "Ground Floor"}
                 {floor === "First" && "1st Floor"}
               </button>
@@ -760,8 +863,16 @@ export default function HomePage() {
           {/* Room/Lab Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-3 mb-6 sm:mb-10">
             {filteredRooms.map((room) => {
-              const availableSlots = getAvailableSlotCount(room.name);
-              const totalSlots = timeSlots.length;
+              // Determine capacity for labs only
+              let capacity = null;
+              if (room.type === "Lab") {
+                // Check if it's a combined lab (contains "Combined", +, or &)
+                const isCombined =
+                  room.name.toLowerCase().includes("combined") ||
+                  room.name.includes("+") ||
+                  room.name.includes("&");
+                capacity = isCombined ? 80 : 40;
+              }
 
               return (
                 <div
@@ -773,18 +884,24 @@ export default function HomePage() {
                       : "bg-[#1F2937] border-[#374151] text-white hover:border-[#3B82F6]"
                   }`}
                 >
-                  <div className="text-xs sm:text-sm font-bold truncate">{room.name}</div>
-                  <div className="text-[10px] sm:text-xs text-[#9CA3AF] mt-1">{room.type}</div>
-                  {/* Available Slots Count */}
-                  <div
-                    className={`text-[10px] sm:text-xs mt-1 sm:mt-2 font-semibold ${
-                      selectedRoom?.id === room.id
-                        ? "text-white"
-                        : "text-[#3B82F6]"
-                    }`}
-                  >
-                    {availableSlots}/{totalSlots} slots
+                  <div className="text-xs sm:text-sm font-bold truncate">
+                    {room.name}
                   </div>
+                  <div className="text-[10px] sm:text-xs text-[#9CA3AF] mt-1">
+                    {room.type}
+                  </div>
+                  {/* Show capacity only for labs */}
+                  {capacity && (
+                    <div
+                      className={`text-[10px] sm:text-xs mt-1 sm:mt-2 font-semibold ${
+                        selectedRoom?.id === room.id
+                          ? "text-white"
+                          : "text-[#3B82F6]"
+                      }`}
+                    >
+                      Capacity: {capacity}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -799,7 +916,9 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
                 <span className="w-1.5 sm:w-2 h-6 sm:h-8 bg-gradient-to-b from-[#3B82F6] to-[#2563EB] rounded-full"></span>
-                <span className="truncate">Slots for {selectedRoom.name} on {selectedDate}</span>
+                <span className="truncate">
+                  Slots for {selectedRoom.name} on {selectedDate}
+                </span>
               </h2>
               <button
                 onClick={() => {
@@ -833,111 +952,125 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-2 sm:gap-4">
-                {timeSlots.map((slot) => {
-                  const status = getSlotStatus(slot);
-                  const isAcademic =
-                    typeof status === "object" && status.type === "Academic";
-                  const statusText = isAcademic ? "Academic Class" : status;
-                  const isSelected = selectedSlots.includes(slot);
-                  const isFree = statusText === "Free";
-                  const isExpired = statusText === "Expired";
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-2 sm:gap-4">
+              {timeSlots.map((slot) => {
+                const status = getSlotStatus(slot);
+                const isAcademic =
+                  typeof status === "object" && status.type === "Academic";
+                const statusText = isAcademic ? "Academic Class" : status;
+                const isSelected = selectedSlots.includes(slot);
+                const isFree = statusText === "Free";
+                const isExpired = statusText === "Expired";
+                const isDisabledByOverlap = isSlotDisabledByOverlap(slot);
 
-                  let bgClass = "";
-                  if (isExpired) {
-                    bgClass =
-                      "bg-[#6B7280] text-[#D1D5DB] cursor-not-allowed opacity-60";
-                  } else if (isAcademic) {
-                    bgClass =
-                      "bg-purple-600 text-white shadow-purple-600/50 cursor-pointer";
-                  } else if (isSelected && isFree) {
-                    bgClass =
-                      "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50 ring-4 ring-[#60A5FA] scale-105";
-                  } else if (isFree) {
-                    bgClass =
-                      "bg-[#1F2937] hover:bg-[#374151] text-white border-2 border-[#3B82F6] hover:border-[#60A5FA]";
-                  } else if (statusText === "Pending") {
-                    bgClass = "bg-yellow-500 text-yellow-900 border-yellow-600";
-                  } else if (
-                    statusText.startsWith("Approved") ||
-                    statusText === "Approved"
-                  ) {
-                    bgClass = "bg-green-600 text-white shadow-green-600/50";
-                  } else if (statusText.startsWith("Blocked")) {
-                    bgClass = "bg-[#374151] text-[#9CA3AF] cursor-not-allowed";
-                  } else {
-                    bgClass = "bg-red-600 text-white shadow-red-600/50";
-                  }
+                let bgClass = "";
+                if (isExpired) {
+                  bgClass =
+                    "bg-[#6B7280] text-[#D1D5DB] cursor-not-allowed opacity-60";
+                } else if (isAcademic) {
+                  bgClass =
+                    "bg-purple-600 text-white shadow-purple-600/50 cursor-pointer";
+                } else if (isDisabledByOverlap && isFree) {
+                  // Overlapping slot - grayed out and disabled
+                  bgClass =
+                    "bg-[#374151] text-[#6B7280] cursor-not-allowed opacity-50 border-2 border-[#4B5563]";
+                } else if (isSelected && isFree) {
+                  bgClass =
+                    "bg-gradient-to-br from-[#3B82F6] to-[#2563EB] text-white shadow-lg shadow-[#3B82F6]/50 ring-4 ring-[#60A5FA] scale-105";
+                } else if (isFree) {
+                  bgClass =
+                    "bg-[#1F2937] hover:bg-[#374151] text-white border-2 border-[#3B82F6] hover:border-[#60A5FA]";
+                } else if (statusText === "Pending") {
+                  bgClass = "bg-yellow-500 text-yellow-900 border-yellow-600";
+                } else if (
+                  statusText.startsWith("Approved") ||
+                  statusText === "Approved"
+                ) {
+                  bgClass = "bg-green-600 text-white shadow-green-600/50";
+                } else if (statusText.startsWith("Blocked")) {
+                  bgClass = "bg-[#374151] text-[#9CA3AF] cursor-not-allowed";
+                } else {
+                  bgClass = "bg-red-600 text-white shadow-red-600/50";
+                }
 
-                  return (
-                    <div
-                      key={slot}
-                      className={`p-3 sm:p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${
-                        isFree && !isExpired
-                          ? "cursor-pointer"
-                          : isAcademic
-                          ? "cursor-pointer"
-                          : "cursor-default"
-                      }`}
-                      onClick={() => {
-                        if (isAcademic) {
-                          setSelectedAcademicDetails(status.details);
-                          setShowAcademicModal(true);
-                        } else if (isFree && !isExpired) {
-                          toggleSlotSelection(slot);
-                        }
-                      }}
-                    >
-                      <div className="text-xs sm:text-sm flex items-center justify-center gap-1 sm:gap-2">
-                        {isFree && !isExpired && (
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {}}
-                            className="w-3 h-3 sm:w-4 sm:h-4 accent-[#3B82F6]"
-                          />
-                        )}
-                        {slot}
-                      </div>
-                      <div className="text-[10px] sm:text-xs mt-1 sm:mt-2 font-normal">
-                        {isAcademic ? (
-                          <>
-                            <div>{statusText}</div>
-                            <div className="mt-1 text-purple-200 truncate">
-                              {status.details.subject}
-                            </div>
-                            <div className="text-purple-200 truncate">
-                              {status.details.year}{" "}
-                              {status.details.branch
-                                ? status.details.branch + " "
-                                : ""}
-                              {status.details.section}
-                            </div>
-                          </>
-                        ) : (
-                          statusText
-                        )}
-                      </div>
-                      {isSelected && (
-                        <div className="text-[10px] sm:text-xs mt-1">✓ Selected</div>
+                return (
+                  <div
+                    key={slot}
+                    className={`p-3 sm:p-5 rounded-lg text-center transition-all font-semibold shadow-lg transform ${bgClass} ${
+                      isFree && !isExpired && !isDisabledByOverlap
+                        ? "cursor-pointer"
+                        : isAcademic
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed"
+                    }`}
+                    onClick={() => {
+                      if (isAcademic) {
+                        setSelectedAcademicDetails(status.details);
+                        setShowAcademicModal(true);
+                      } else if (isFree && !isExpired && !isDisabledByOverlap) {
+                        toggleSlotSelection(slot);
+                      }
+                    }}
+                  >
+                    <div className="text-xs sm:text-sm flex items-center justify-center gap-1 sm:gap-2">
+                      {isFree && !isExpired && !isDisabledByOverlap && (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="w-3 h-3 sm:w-4 sm:h-4 accent-[#3B82F6]"
+                        />
                       )}
-                      {isAcademic && (
-                        <div className="text-[10px] sm:text-xs mt-1">🔒 Click for details</div>
+                      {slot}
+                    </div>
+                    <div className="text-[10px] sm:text-xs mt-1 sm:mt-2 font-normal">
+                      {isAcademic ? (
+                        <>
+                          <div>{statusText}</div>
+                          <div className="mt-1 text-purple-200 truncate">
+                            {status.details.subject}
+                          </div>
+                          <div className="text-purple-200 truncate">
+                            {status.details.year}{" "}
+                            {status.details.branch
+                              ? status.details.branch + " "
+                              : ""}
+                            {status.details.section}
+                          </div>
+                        </>
+                      ) : isDisabledByOverlap && isFree ? (
+                        <>
+                          <div>Overlaps</div>
+                          <div className="text-[10px]">🚫 Can't select</div>
+                        </>
+                      ) : (
+                        statusText
                       )}
                     </div>
-                  );
-                })}
+                    {isSelected && (
+                      <div className="text-[10px] sm:text-xs mt-1">
+                        ✓ Selected
+                      </div>
+                    )}
+                    {isAcademic && (
+                      <div className="text-[10px] sm:text-xs mt-1">
+                        🔒 Click for details
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {selectedSlots.length > 0 && (
+              <div className="mt-6 p-4 bg-[#374151] rounded-lg">
+                <p className="text-sm text-white font-semibold mb-2">
+                  Selected Slots:
+                </p>
+                <p className="text-[#9CA3AF]">
+                  {selectedSlots.sort().join(", ")}
+                </p>
               </div>
-              {selectedSlots.length > 0 && (
-                <div className="mt-6 p-4 bg-[#374151] rounded-lg">
-                  <p className="text-sm text-white font-semibold mb-2">
-                    Selected Slots:
-                  </p>
-                  <p className="text-[#9CA3AF]">
-                    {selectedSlots.sort().join(", ")}
-                  </p>
-                </div>
-              )}
+            )}
           </div>
         </div>
       )}
@@ -961,24 +1094,36 @@ export default function HomePage() {
             <div className="space-y-3 sm:space-y-4">
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
                 <p className="text-[#9CA3AF] text-xs sm:text-sm">Name</p>
-                <p className="text-white font-semibold text-sm sm:text-base">{user.name}</p>
+                <p className="text-white font-semibold text-sm sm:text-base">
+                  {user.name}
+                </p>
               </div>
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
                 <p className="text-[#9CA3AF] text-xs sm:text-sm">Email</p>
-                <p className="text-white font-semibold text-sm sm:text-base break-all">{user.email}</p>
+                <p className="text-white font-semibold text-sm sm:text-base break-all">
+                  {user.email}
+                </p>
               </div>
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
                 <p className="text-[#9CA3AF] text-xs sm:text-sm">Department</p>
-                <p className="text-white font-semibold text-sm sm:text-base">{user.department}</p>
+                <p className="text-white font-semibold text-sm sm:text-base">
+                  {user.department}
+                </p>
               </div>
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-xs sm:text-sm">Staff Number</p>
-                <p className="text-white font-semibold text-sm sm:text-base">{user.staffNumber}</p>
+                <p className="text-[#9CA3AF] text-xs sm:text-sm">
+                  Staff Number
+                </p>
+                <p className="text-white font-semibold text-sm sm:text-base">
+                  {user.staffNumber}
+                </p>
               </div>
               {user.phone && (
                 <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
                   <p className="text-[#9CA3AF] text-xs sm:text-sm">Phone</p>
-                  <p className="text-white font-semibold text-sm sm:text-base">{user.phone}</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">
+                    {user.phone}
+                  </p>
                 </div>
               )}
             </div>
@@ -998,7 +1143,7 @@ export default function HomePage() {
               <button
                 onClick={() => setShowBookingHistory(false)}
                 className="text-[#9CA3AF] hover:text-white text-xl sm:text-2xl transition"
-              >
+              > 
                 ✖
               </button>
             </div>
@@ -1010,77 +1155,122 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
-                  {getUserBookings().map((booking) => (
-                    <div
-                      key={booking._id}
-                      className="bg-[#111827] p-3 sm:p-5 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
-                    >
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-bold text-base sm:text-lg truncate">
-                            {booking.room}
-                          </h3>
-                          <p className="text-[#9CA3AF] text-xs sm:text-sm">
-                            {new Date(booking.date).toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              }
-                            )}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${
-                            booking.status === "Approved"
-                              ? "bg-green-600 text-white"
-                              : booking.status === "Rejected"
-                              ? "bg-red-600 text-white"
-                              : "bg-yellow-500 text-yellow-900"
-                          }`}
-                        >
-                          {booking.status}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
-                        <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
-                          <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
-                            Time Slot(s)
-                          </p>
-                          <p className="text-white font-semibold text-xs sm:text-sm">
-                            {formatSlotsDisplay(
-                              booking.slots || [booking.slot]
-                            )}
-                          </p>
-                        </div>
-                        <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
-                          <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
-                            Booked On
-                          </p>
-                          <p className="text-white font-semibold text-xs sm:text-sm">
-                            {new Date(booking.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
-                        <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Reason</p>
-                        <p className="text-white text-xs sm:text-sm break-words">{booking.reason}</p>
-                      </div>
-                      {booking.status === "Rejected" &&
-                        booking.rejectionReason && (
-                          <div className="mt-2 sm:mt-3 bg-red-900/20 border border-red-900/50 p-2 sm:p-3 rounded">
-                            <p className="text-red-400 text-[10px] sm:text-xs mb-1">
-                              Rejection Reason
-                            </p>
-                            <p className="text-red-300 text-xs sm:text-sm break-words">
-                              {booking.rejectionReason}
+                  {getUserBookings().map((booking) => {
+                    // Debug: Log booking data
+                    console.log("📋 Booking data:", {
+                      id: booking._id,
+                      room: booking.room,
+                      status: booking.status,
+                      appliedBy: booking.appliedBy,
+                      appliedByEmail: booking.appliedByEmail,
+                      approvedBy: booking.approvedBy,
+                      approvedByEmail: booking.approvedByEmail,
+                    });
+
+                    return (
+                      <div
+                        key={booking._id}
+                        className="bg-[#111827] p-3 sm:p-5 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-white font-bold text-base sm:text-lg truncate">
+                              {booking.room}
+                            </h3>
+                            <p className="text-[#9CA3AF] text-xs sm:text-sm">
+                              {new Date(booking.date).toLocaleDateString(
+                                "en-US",
+                                {
+                                  weekday: "long",
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                }
+                              )}
                             </p>
                           </div>
-                        )}
-                    </div>
-                  ))}
+                          <span
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${
+                              booking.status === "Approved"
+                                ? "bg-green-600 text-white"
+                                : booking.status === "Rejected"
+                                ? "bg-red-600 text-white"
+                                : "bg-yellow-500 text-yellow-900"
+                            }`}
+                          >
+                            {booking.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
+                          <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                              Time Slot(s)
+                            </p>
+                            <p className="text-white font-semibold text-xs sm:text-sm">
+                              {formatSlotsDisplay(
+                                booking.slots || [booking.slot]
+                              )}
+                            </p>
+                          </div>
+                          <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                              Booked On
+                            </p>
+                            <p className="text-white font-semibold text-xs sm:text-sm">
+                              {new Date(booking.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3">
+                          <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                              Applied By
+                            </p>
+                            <p className="text-white font-semibold text-xs sm:text-sm">
+                              {booking.appliedBy || booking.facultyName}
+                            </p>
+                            {booking.appliedByEmail && (
+                              <p className="text-[#9CA3AF] text-[10px] mt-1">
+                                {booking.appliedByEmail}
+                              </p>
+                            )}
+                          </div>
+                          <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                            <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                              Approved By
+                            </p>
+                            <p className="text-white font-semibold text-xs sm:text-sm">
+                              {booking.approvedBy || "-"}
+                            </p>
+                            {booking.approvedByEmail && (
+                              <p className="text-[#9CA3AF] text-[10px] mt-1">
+                                {booking.approvedByEmail}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="bg-[#1F2937] p-2 sm:p-3 rounded border border-[#374151]">
+                          <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                            Reason
+                          </p>
+                          <p className="text-white text-xs sm:text-sm break-words">
+                            {booking.reason}
+                          </p>
+                        </div>
+                        {booking.status === "Rejected" &&
+                          booking.rejectionReason && (
+                            <div className="mt-2 sm:mt-3 bg-red-900/20 border border-red-900/50 p-2 sm:p-3 rounded">
+                              <p className="text-red-400 text-[10px] sm:text-xs mb-1">
+                                Rejection Reason
+                              </p>
+                              <p className="text-red-300 text-xs sm:text-sm break-words">
+                                {booking.rejectionReason}
+                              </p>
+                            </div>
+                          )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1108,20 +1298,26 @@ export default function HomePage() {
             </div>
             <div className="space-y-3 sm:space-y-4">
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Subject</p>
+                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                  Subject
+                </p>
                 <p className="text-white font-bold text-base sm:text-lg break-words">
                   {selectedAcademicDetails.subject}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Type</p>
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                    Type
+                  </p>
                   <p className="text-white font-semibold text-xs sm:text-sm">
                     {selectedAcademicDetails.type}
                   </p>
                 </div>
                 <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Room</p>
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                    Room
+                  </p>
                   <p className="text-white font-semibold text-xs sm:text-sm truncate">
                     {selectedAcademicDetails.room}
                   </p>
@@ -1129,32 +1325,42 @@ export default function HomePage() {
               </div>
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Branch</p>
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                    Branch
+                  </p>
                   <p className="text-white font-semibold text-xs sm:text-sm truncate">
                     {selectedAcademicDetails.branch || "N/A"}
                   </p>
                 </div>
                 <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Year</p>
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                    Year
+                  </p>
                   <p className="text-white font-semibold text-xs sm:text-sm">
                     {selectedAcademicDetails.year}
                   </p>
                 </div>
                 <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Section</p>
+                  <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                    Section
+                  </p>
                   <p className="text-white font-semibold text-xs sm:text-sm">
                     {selectedAcademicDetails.section}
                   </p>
                 </div>
               </div>
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Faculty</p>
+                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                  Faculty
+                </p>
                 <p className="text-white font-semibold text-xs sm:text-sm break-words">
                   {selectedAcademicDetails.faculty}
                 </p>
               </div>
               <div className="bg-[#111827] p-3 sm:p-4 rounded-lg border border-[#374151]">
-                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">Time Slot</p>
+                <p className="text-[#9CA3AF] text-[10px] sm:text-xs mb-1">
+                  Time Slot
+                </p>
                 <p className="text-white font-semibold text-xs sm:text-sm">
                   {selectedAcademicDetails.slot}
                 </p>
@@ -1178,6 +1384,37 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications - WhatsApp Style */}
+      <div className="fixed bottom-4 left-4 z-[9999] flex flex-col gap-2">
+        {toastNotifications.map((toast) => (
+          <div
+            key={toast.id}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl border animate-slideIn ${
+              toast.type === "success"
+                ? "bg-green-600 border-green-500 text-white"
+                : "bg-red-600 border-red-500 text-white"
+            }`}
+            style={{
+              animation: "slideIn 0.3s ease-out",
+              minWidth: "300px",
+              maxWidth: "400px",
+            }}
+          >
+            <div className="text-sm font-medium">{toast.message}</div>
+            <button
+              onClick={() =>
+                setToastNotifications((prev) =>
+                  prev.filter((t) => t.id !== toast.id)
+                )
+              }
+              className="ml-auto text-white hover:text-gray-200 transition"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
