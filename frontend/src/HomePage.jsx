@@ -8,6 +8,7 @@ import {
   FaBars,
   FaTimes,
 } from "react-icons/fa";
+import API_BASE_URL from './config/api';
 import { 
   MdMeetingRoom, 
   MdComputer,
@@ -244,7 +245,7 @@ export default function HomePage() {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/bookings");
+      const res = await fetch(`${API_BASE_URL}/api/bookings`);
       const data = await res.json();
 
       // Check for status changes (only for current user's bookings)
@@ -287,7 +288,7 @@ export default function HomePage() {
   };
 
   const fetchCalendar = async () => {
-    const res = await fetch("http://localhost:5000/api/calendar/view-all");
+    const res = await fetch(`${API_BASE_URL}/api/calendar/view-all`);
     const data = await res.json();
     setAcademicSlots(data);
   };
@@ -304,7 +305,7 @@ export default function HomePage() {
     try {
       // Fetch availability for ALL selected time slots in parallel
       const promises = timeSlots.map(timeSlot =>
-        fetch(`http://localhost:5000/api/bookings/availability?date=${date}&time=${timeSlot}`)
+        fetch(`${API_BASE_URL}/api/bookings/availability?date=${date}&time=${timeSlot}`)
           .then(res => res.json())
       );
       
@@ -620,7 +621,7 @@ export default function HomePage() {
 
     console.log("📤 Sending booking request:", booking);
 
-    const res = await fetch("http://localhost:5000/api/book", {
+    const res = await fetch(`${API_BASE_URL}/api/book`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(booking),

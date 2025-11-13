@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { useNavigate } from "react-router-dom";
 import { FaBars } from "react-icons/fa";
+import API_BASE_URL from './config/api';
 
 export default function AdminTimetable() {
   const navigate = useNavigate();
@@ -196,7 +197,7 @@ export default function AdminTimetable() {
       if (formData.year && formData.section) {
         try {
           const res = await fetch(
-            `http://localhost:5000/api/calendar/section-room/${formData.year}/${formData.section}`
+            `${API_BASE_URL}/api/calendar/section-room/${formData.year}/${formData.section}`
           );
           const data = await res.json();
           setSavedSectionRoom(data.room);
@@ -297,7 +298,7 @@ export default function AdminTimetable() {
 
         // If this is the first time (no saved room) OR room is being changed, save/update the room mapping
         if ((!savedSectionRoom || allowRoomChange) && classRoom) {
-          await fetch("http://localhost:5000/api/calendar/section-room", {
+          await fetch(`${API_BASE_URL}/api/calendar/section-room`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -325,7 +326,7 @@ export default function AdminTimetable() {
 
       console.log("Submitting entries:", entries);
 
-      const res = await fetch("http://localhost:5000/api/calendar/bulk", {
+      const res = await fetch(`${API_BASE_URL}/api/calendar/bulk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entries }),
@@ -400,7 +401,7 @@ export default function AdminTimetable() {
                       try {
                         // Delete all academic calendar entries
                         const res1 = await fetch(
-                          "http://localhost:5000/api/calendar/delete-all",
+                          `${API_BASE_URL}/api/calendar/delete-all`,
                           {
                             method: "DELETE",
                           }
@@ -409,7 +410,7 @@ export default function AdminTimetable() {
 
                         // Delete all section room mappings
                         const res2 = await fetch(
-                          "http://localhost:5000/api/calendar/delete-all-rooms",
+                          `${API_BASE_URL}/api/calendar/delete-all-rooms`,
                           {
                             method: "DELETE",
                           }

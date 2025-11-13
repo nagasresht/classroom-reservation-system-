@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { FaBars } from 'react-icons/fa';
+import API_BASE_URL from './config/api';
 
 export default function AdminCalendarPanel() {
   const [form, setForm] = useState({
@@ -61,7 +62,7 @@ export default function AdminCalendarPanel() {
       ) {
         try {
           const res = await fetch(
-            `http://localhost:5000/api/classroom/get-room?year=${updatedForm.year}&section=${updatedForm.section}`
+            `${API_BASE_URL}/api/classroom/get-room?year=${updatedForm.year}&section=${updatedForm.section}`
           );
           const data = await res.json();
           if (res.ok) {
@@ -126,7 +127,7 @@ export default function AdminCalendarPanel() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/calendar/bulk", {
+      const res = await fetch(`${API_BASE_URL}/api/calendar/bulk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entries: payloads })

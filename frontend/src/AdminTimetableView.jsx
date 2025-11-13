@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import { FaBars } from "react-icons/fa";
+import API_BASE_URL from './config/api';
 
 export default function AdminTimetableView() {
   const [branch, setBranch] = useState("");
@@ -61,7 +62,7 @@ export default function AdminTimetableView() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/calendar/view?year=${year}&section=${section}`
+        `${API_BASE_URL}/api/calendar/view?year=${year}&section=${section}`
       );
       const data = await res.json();
       console.log("Fetched timetable data:", data);

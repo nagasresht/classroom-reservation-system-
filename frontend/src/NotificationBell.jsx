@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaBell, FaCheck, FaTimes, FaCheckDouble, FaTrash } from 'react-icons/fa';
+import API_BASE_URL from './config/api';
 
 export default function NotificationBell({ userEmail }) {
   const [notifications, setNotifications] = useState([]);
@@ -11,7 +12,7 @@ export default function NotificationBell({ userEmail }) {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${encodeURIComponent(userEmail)}`);
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${encodeURIComponent(userEmail)}`);
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -25,7 +26,7 @@ export default function NotificationBell({ userEmail }) {
   // Mark notification as read
   const markAsRead = async (notificationId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}/read`, {
         method: 'PUT'
       });
       if (res.ok) {
@@ -40,7 +41,7 @@ export default function NotificationBell({ userEmail }) {
   const markAllAsRead = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${encodeURIComponent(userEmail)}/read-all`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${encodeURIComponent(userEmail)}/read-all`, {
         method: 'PUT'
       });
       if (res.ok) {
@@ -56,7 +57,7 @@ export default function NotificationBell({ userEmail }) {
   // Delete notification
   const deleteNotification = async (notificationId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${notificationId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE'
       });
       if (res.ok) {

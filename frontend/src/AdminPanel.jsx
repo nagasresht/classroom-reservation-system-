@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { FaBars } from "react-icons/fa";
+import API_BASE_URL from './config/api';
 
 // Helper function to format slots display
 function formatSlotsDisplay(slots) {
@@ -115,7 +116,7 @@ export default function AdminPanel() {
 
       // First, trigger auto-expiration of old bookings
       try {
-        await fetch("http://localhost:5000/api/auto-expire-bookings", {
+        await fetch(`${API_BASE_URL}/api/auto-expire-bookings`, {
           method: "POST",
         });
       } catch (expireErr) {
@@ -125,7 +126,7 @@ export default function AdminPanel() {
       // FIXED: Properly construct the query URL with status filter
       // When filter is empty string, fetch all bookings (no status filter)
       const statusParam = filter ? `status=${filter}` : "";
-      const url = `http://localhost:5000/api/bookings${
+      const url = `${API_BASE_URL}/api/bookings${
         statusParam ? "?" + statusParam : ""
       }`;
 
@@ -186,7 +187,7 @@ export default function AdminPanel() {
 
       console.log("📦 Full payload:", JSON.stringify(payload, null, 2));
 
-      const res = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -209,7 +210,7 @@ export default function AdminPanel() {
   const handleResetBookings = async () => {
     if (window.confirm("Are you sure you want to reset ALL bookings?")) {
       try {
-        const res = await fetch("http://localhost:5000/api/reset-bookings", {
+        const res = await fetch(`${API_BASE_URL}/api/reset-bookings`, {
           method: "DELETE",
         });
 

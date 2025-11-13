@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from './config/api';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/forgot-password', {
+      const res = await fetch(`${API_BASE_URL}/api/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

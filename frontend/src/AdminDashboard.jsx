@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { FaClipboardList, FaCalendarAlt, FaBook, FaHistory, FaTrashRestoreAlt, FaBars } from 'react-icons/fa';
+import API_BASE_URL from './config/api';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function AdminDashboard() {
     if (!confirm) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/reset-bookings", {
+      const res = await fetch(`${API_BASE_URL}/api/reset-bookings`, {
         method: "DELETE"
       });
       const data = await res.json();
