@@ -42,8 +42,9 @@ const sendOTPEmail = async (recipientEmail, recipientName, otp) => {
       },
       {
         headers: {
+          'accept': 'application/json',
           'api-key': process.env.BREVO_API_KEY,
-          'Content-Type': 'application/json'
+          'content-type': 'application/json'
         }
       }
     );
