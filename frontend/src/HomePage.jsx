@@ -213,9 +213,19 @@ export default function HomePage() {
   const [selectedAcademicDetails, setSelectedAcademicDetails] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [toastNotifications, setToastNotifications] = useState([]);
+  
+  // NEW FEATURES: Time slot filter, room search, and show only free rooms toggle
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState([]); // CHANGED: Array for multi-select time slot filter
+  const [tempSelectedSlots, setTempSelectedSlots] = useState([]); // Temporary state before clicking Apply
+  const [showSlotDropdown, setShowSlotDropdown] = useState(false); // Show/hide dropdown
+  const [roomSearchQuery, setRoomSearchQuery] = useState(""); // For room search bar
+  const [showOnlyFreeRooms, setShowOnlyFreeRooms] = useState(false); // Toggle for free rooms only
+  const [bookedRoomIds, setBookedRoomIds] = useState([]); // Track which rooms are booked for selected date+time
+  const [isSelectedSlotExpired, setIsSelectedSlotExpired] = useState(false); // Track if ANY selected time slot is expired
 
   const dropdownRef = useRef(null);
   const facultyDropdownRef = useRef(null);
+  const slotDropdownRef = useRef(null);
 
   const [bookings, setBookings] = useState([]);
   const [academicSlots, setAcademicSlots] = useState([]);
@@ -282,6 +292,54 @@ export default function HomePage() {
     setAcademicSlots(data);
   };
 
+  // NEW: Fetch availability for selected date and time slots (multiple)
+  const fetchAvailability = async (date, timeSlots) => {
+    if (!timeSlots || timeSlots.length === 0) {
+      // No time slots selected, reset to empty
+      setBookedRoomIds([]);
+      setIsSelectedSlotExpired(false);
+      return;
+    }
+
+    try {
+      // Fetch availability for ALL selected time slots in parallel
+      const promises = timeSlots.map(timeSlot =>
+        fetch(`http://localhost:5000/api/bookings/availability?date=${date}&time=${timeSlot}`)
+          .then(res => res.json())
+      );
+      
+      const results = await Promise.all(promises);
+      
+      console.log(`🔍 Availability responses for ${timeSlots.length} slot(s):`, results);
+      
+      // Merge all booked rooms from all time slots (union)
+      const allBookedRooms = new Set();
+      let anyExpired = false;
+      
+      results.forEach((data, index) => {
+        if (data.expiredSlot) {
+          console.log(`⏰ Time slot ${timeSlots[index]} is EXPIRED`);
+          anyExpired = true;
+        }
+        if (data.bookedRooms) {
+          data.bookedRooms.forEach(roomId => allBookedRooms.add(roomId));
+        }
+      });
+      
+      // If ANY slot is expired, mark as expired
+      setIsSelectedSlotExpired(anyExpired);
+      // Room is marked as booked if it's booked in ANY of the selected time slots
+      setBookedRoomIds(Array.from(allBookedRooms));
+      
+      console.log(`📊 Total booked rooms across ${timeSlots.length} slot(s):`, Array.from(allBookedRooms));
+      
+    } catch (error) {
+      console.error("Error fetching availability:", error);
+      setBookedRoomIds([]);
+      setIsSelectedSlotExpired(false);
+    }
+  };
+
   useEffect(() => {
     fetchBookings();
     fetchCalendar();
@@ -294,11 +352,19 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // NEW: Fetch availability when date or time slot changes
+  useEffect(() => {
+    fetchAvailability(selectedDate, selectedTimeSlot);
+  }, [selectedDate, selectedTimeSlot]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowUserDropdown(false);
+      }
+      if (slotDropdownRef.current && !slotDropdownRef.current.contains(event.target)) {
+        setShowSlotDropdown(false);
       }
       if (
         facultyDropdownRef.current &&
@@ -642,12 +708,28 @@ export default function HomePage() {
     // Filter by floor
     // Ground Floor: rooms starting with E0 (E001, E002, E003, etc.)
     if (selectedFloor === "Ground") {
-      return room.name.startsWith("E0");
+      if (!room.name.startsWith("E0")) return false;
     }
 
     // First Floor: rooms starting with E1 (E101, E102, E138, etc.)
     if (selectedFloor === "First") {
-      return room.name.startsWith("E1");
+      if (!room.name.startsWith("E1")) return false;
+    }
+
+    // NEW: Filter by room search query
+    if (roomSearchQuery.trim()) {
+      const query = roomSearchQuery.trim().toUpperCase();
+      if (!room.name.toUpperCase().includes(query)) {
+        return false;
+      }
+    }
+
+    // NEW: Filter by "Show Only Free Rooms" toggle
+    if (showOnlyFreeRooms && selectedTimeSlot.length > 0) {
+      const isBooked = bookedRoomIds.includes(room.name);
+      if (isBooked) {
+        return false; // Hide booked rooms when toggle is ON
+      }
     }
 
     return true;
@@ -761,6 +843,13 @@ export default function HomePage() {
         <div className="flex items-center gap-3 lg:hidden">
           <NotificationBell userEmail={user.email} />
           <button
+            onClick={() => setShowBookingHistory(true)}
+            className="text-[#10B981] bg-[#1F2937] p-2 rounded-lg border border-[#374151] hover:border-[#10B981] transition-all relative"
+            title="My Bookings"
+          >
+            <BsClockHistory size={20} />
+          </button>
+          <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             className="text-white bg-[#1F2937] p-2 rounded-lg border border-[#374151] hover:border-[#3B82F6] transition-all"
           >
@@ -793,6 +882,16 @@ export default function HomePage() {
               })}</span>
             </div>
           </div>
+          <button
+            onClick={() => {
+              setShowBookingHistory(true);
+              setShowMobileMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-white hover:bg-[#374151] transition-colors flex items-center gap-3 border-b border-[#374151]"
+          >
+            <BsClockHistory className="text-[#10B981] text-lg" />
+            My Bookings
+          </button>
           <button
             onClick={() => {
               setShowProfileModal(true);
@@ -939,6 +1038,188 @@ export default function HomePage() {
         </div>
       ) : (
         <>
+          {/* NEW FEATURES: Filter Controls Section */}
+          <div className="max-w-7xl mx-auto mb-6 space-y-4">
+            {/* Time Slot Filter & Search Row */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              {/* Time Slot Multi-Select Dropdown with Apply Button */}
+              <div className="flex-1 relative" ref={slotDropdownRef}>
+                <label className="block text-sm font-semibold text-[#9CA3AF] mb-2">
+                  Select Time Slot(s)
+                </label>
+                <div className="relative">
+                  {/* Dropdown Button */}
+                  <button
+                    onClick={() => {
+                      if (!showSlotDropdown) {
+                        // Sync temp state with current selection when opening
+                        setTempSelectedSlots([...selectedTimeSlot]);
+                      }
+                      setShowSlotDropdown(!showSlotDropdown);
+                    }}
+                    className="w-full bg-[#1F2937] border-2 border-[#374151] text-white px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] transition-all shadow-lg hover:border-[#3B82F6]/50 text-left flex items-center justify-between"
+                  >
+                    <span className="truncate">
+                      {selectedTimeSlot.length === 0 
+                        ? "All Time Slots" 
+                        : `${selectedTimeSlot.length} slot${selectedTimeSlot.length > 1 ? 's' : ''} selected`
+                      }
+                    </span>
+                    <span className={`transition-transform ${showSlotDropdown ? 'rotate-180' : ''}`}>▼</span>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showSlotDropdown && (
+                    <div className="absolute z-50 mt-2 w-full bg-[#1F2937] border-2 border-[#374151] rounded-lg shadow-2xl overflow-hidden">
+                      <div className="max-h-64 overflow-y-auto">
+                        {timeSlots.map((slot) => (
+                          <label
+                            key={slot}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-[#374151] cursor-pointer transition-colors border-b border-[#374151]/50 last:border-b-0"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={tempSelectedSlots.includes(slot)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setTempSelectedSlots([...tempSelectedSlots, slot]);
+                                } else {
+                                  setTempSelectedSlots(tempSelectedSlots.filter(s => s !== slot));
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-[#374151] text-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6] bg-[#1F2937] cursor-pointer"
+                            />
+                            <span className="text-sm text-white flex-1">{slot}</span>
+                          </label>
+                        ))}
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="border-t border-[#374151] bg-[#111827] px-4 py-3 flex items-center justify-between gap-3">
+                        <button
+                          onClick={() => {
+                            setTempSelectedSlots([]);
+                            setSelectedTimeSlot([]);
+                            setShowSlotDropdown(false);
+                          }}
+                          className="text-xs text-[#9CA3AF] hover:text-white font-semibold transition-colors"
+                        >
+                          Clear All
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedTimeSlot([...tempSelectedSlots]);
+                            setShowSlotDropdown(false);
+                          }}
+                          className="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1D4ED8] text-white px-6 py-2 rounded-lg text-sm font-semibold shadow-lg transition-all transform hover:scale-105"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Room Search Bar */}
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-[#9CA3AF] mb-2">
+                  Search Room
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., E003 or E0..."
+                  value={roomSearchQuery}
+                  onChange={(e) => setRoomSearchQuery(e.target.value)}
+                  className="w-full bg-[#1F2937] border-2 border-[#374151] text-white px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] transition-all shadow-lg hover:border-[#3B82F6]/50 placeholder-[#6B7280]"
+                />
+              </div>
+            </div>
+
+            {/* Show Only Free Rooms Toggle */}
+            <div className="flex items-center justify-between bg-[#1F2937] border-2 border-[#374151] rounded-lg px-4 py-3 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${selectedTimeSlot.length > 0 ? "bg-[#10B981]" : "bg-[#6B7280]"}`}></div>
+                <span className="text-sm font-semibold text-white">
+                  Show Only Free Rooms
+                  {selectedTimeSlot.length > 0 && (
+                    <span className="text-[#9CA3AF] ml-2">
+                      ({selectedTimeSlot.length} slot{selectedTimeSlot.length > 1 ? 's' : ''})
+                    </span>
+                  )}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowOnlyFreeRooms(!showOnlyFreeRooms)}
+                disabled={selectedTimeSlot.length === 0}
+                className={`relative w-14 h-7 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${
+                  selectedTimeSlot.length === 0
+                    ? "bg-[#374151] cursor-not-allowed opacity-50"
+                    : showOnlyFreeRooms
+                    ? "bg-[#10B981]"
+                    : "bg-[#6B7280]"
+                }`}
+              >
+                <div
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${
+                    showOnlyFreeRooms ? "translate-x-7" : ""
+                  }`}
+                ></div>
+              </button>
+            </div>
+
+            {/* Expired Slot Warning */}
+            {isSelectedSlotExpired && selectedTimeSlot.length > 0 && (
+              <div className="bg-red-500/10 border-2 border-red-500/30 rounded-lg px-4 py-3 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⏰</span>
+                  <div>
+                    <p className="text-sm font-semibold text-red-400">
+                      Time Slot{selectedTimeSlot.length > 1 ? 's' : ''} Expired
+                    </p>
+                    <p className="text-xs text-red-300 mt-1">
+                      The selected time slot{selectedTimeSlot.length > 1 ? 's' : ''} ({selectedTimeSlot.join(', ')}) {selectedTimeSlot.length > 1 ? 'have' : 'has'} already passed. All rooms are unavailable for booking.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Active Filters Display */}
+            {(selectedTimeSlot.length > 0 || roomSearchQuery || showOnlyFreeRooms) && (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs font-semibold text-[#9CA3AF]">
+                  Active Filters:
+                </span>
+                {selectedTimeSlot.length > 0 && (
+                  <span className="bg-[#3B82F6]/20 text-[#3B82F6] px-3 py-1 rounded-full text-xs font-semibold border border-[#3B82F6]/30">
+                    Time: {selectedTimeSlot.join(', ')}
+                  </span>
+                )}
+                {roomSearchQuery && (
+                  <span className="bg-[#10B981]/20 text-[#10B981] px-3 py-1 rounded-full text-xs font-semibold border border-[#10B981]/30">
+                    Search: {roomSearchQuery}
+                  </span>
+                )}
+                {showOnlyFreeRooms && (
+                  <span className="bg-[#10B981]/20 text-[#10B981] px-3 py-1 rounded-full text-xs font-semibold border border-[#10B981]/30">
+                    ✓ Free Only
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setSelectedTimeSlot([]);
+                    setRoomSearchQuery("");
+                    setShowOnlyFreeRooms(false);
+                  }}
+                  className="text-xs text-[#9CA3AF] hover:text-white underline"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Room/Lab Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-3 mb-6 sm:mb-10">
             {filteredRooms.map((room) => {
@@ -953,30 +1234,78 @@ export default function HomePage() {
                 capacity = isCombined ? 80 : 40;
               }
 
+              // NEW: Determine if room is booked for selected time slot(s)
+              const isBooked = selectedTimeSlot.length > 0 && bookedRoomIds.includes(room.name);
+              const isFree = selectedTimeSlot.length > 0 && !isBooked;
+
+              // Determine card styling based on availability
+              let cardBgClass = "";
+              let cardBorderClass = "";
+              let cardTextClass = "text-white";
+              let statusBadge = null;
+
+              if (selectedRoom?.id === room.id) {
+                // Selected room - use blue highlight
+                cardBgClass = "bg-[#3B82F6]";
+                cardBorderClass = "border-[#3B82F6] ring-2 ring-[#60A5FA]";
+              } else if (selectedTimeSlot.length > 0) {
+                // Time slot is selected, show color coding
+                if (isSelectedSlotExpired) {
+                  // Expired slot - show as gray/disabled (same as booked/unavailable)
+                  cardBgClass = "bg-[#6B7280]";
+                  cardBorderClass = "border-[#4B5563]";
+                  statusBadge = (
+                    <div className="absolute top-1 right-1 bg-white/90 text-[#6B7280] px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold shadow-md">
+                      EXPIRED
+                    </div>
+                  );
+                } else if (isBooked) {
+                  // Red for booked (includes both Approved and Pending bookings)
+                  cardBgClass = "bg-[#FF4C4C]";
+                  cardBorderClass = "border-[#DC2626]";
+                  statusBadge = (
+                    <div className="absolute top-1 right-1 bg-white/90 text-[#DC2626] px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold shadow-md">
+                      BOOKED
+                    </div>
+                  );
+                } else {
+                  // Green for free
+                  cardBgClass = "bg-[#33CC66]";
+                  cardBorderClass = "border-[#10B981]";
+                  statusBadge = (
+                    <div className="absolute top-1 right-1 bg-white/90 text-[#10B981] px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold shadow-md">
+                      FREE
+                    </div>
+                  );
+                }
+              } else {
+                // No time slot selected - default neutral style
+                cardBgClass = "bg-[#1F2937]";
+                cardBorderClass = "border-[#374151] hover:border-[#3B82F6]";
+              }
+
               return (
                 <div
                   key={room.id}
-                  onClick={() => setSelectedRoom(room)}
-                  className={`cursor-pointer px-2 sm:px-3 py-3 sm:py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${
-                    selectedRoom?.id === room.id
-                      ? "bg-[#3B82F6] border-[#3B82F6] text-white shadow-[#3B82F6]/50 ring-2 ring-[#60A5FA]"
-                      : "bg-[#1F2937] border-[#374151] text-white hover:border-[#3B82F6]"
-                  }`}
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    // Auto-select the filtered time slots if any are selected
+                    if (selectedTimeSlot && selectedTimeSlot.length > 0) {
+                      setSelectedSlots([...selectedTimeSlot]); // Copy all selected time slots
+                    }
+                  }}
+                  className={`relative cursor-pointer px-2 sm:px-3 py-3 sm:py-4 rounded-lg border transition-all transform hover:scale-105 text-center shadow-lg ${cardBgClass} ${cardBorderClass} ${cardTextClass}`}
                 >
+                  {statusBadge}
                   <div className="text-xs sm:text-sm font-bold truncate">
                     {room.name}
                   </div>
-                  <div className="text-[10px] sm:text-xs text-[#9CA3AF] mt-1">
+                  <div className="text-[10px] sm:text-xs mt-1 opacity-90">
                     {room.type}
                   </div>
                   {/* Show capacity only for labs */}
                   {capacity && (
-                    <div
-                      className={`text-[10px] sm:text-xs mt-1 sm:mt-2 font-semibold ${
-                        selectedRoom?.id === room.id
-                          ? "text-white"
-                          : "text-[#3B82F6]"
-                      }`}
+                    <div className="text-[10px] sm:text-xs mt-1 sm:mt-2 font-semibold opacity-90"
                     >
                       Capacity: {capacity}
                     </div>
@@ -985,6 +1314,35 @@ export default function HomePage() {
               );
             })}
           </div>
+
+          {/* Empty State - No Rooms Found */}
+          {filteredRooms.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="bg-[#1F2937] border-2 border-[#374151] rounded-2xl p-8 max-w-md text-center shadow-xl">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  No Rooms Found
+                </h3>
+                <p className="text-[#9CA3AF] text-sm mb-4">
+                  {roomSearchQuery
+                    ? `No rooms match "${roomSearchQuery}"`
+                    : showOnlyFreeRooms && selectedTimeSlot
+                    ? `All rooms are booked for ${selectedTimeSlot}`
+                    : "Try adjusting your filters"}
+                </p>
+                <button
+                  onClick={() => {
+                    setRoomSearchQuery("");
+                    setShowOnlyFreeRooms(false);
+                    setSelectedTimeSlot("");
+                  }}
+                  className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
