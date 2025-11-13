@@ -67,7 +67,13 @@ router.post('/register', async (req, res) => {
       const emailSent = await sendOTPEmail(email, name, otp);
 
       if (!emailSent) {
-        return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+        // Log OTP to console for debugging when email fails
+        console.log('🔐 OTP for', email, ':', otp);
+        console.log('⚠️ Email delivery failed. In production, use a proper email service API.');
+        return res.status(500).json({ 
+          message: 'Failed to send verification email. Please contact support with your email address.',
+          debug: process.env.NODE_ENV === 'development' ? `OTP: ${otp}` : undefined
+        });
       }
 
       res.status(201).json({ 
