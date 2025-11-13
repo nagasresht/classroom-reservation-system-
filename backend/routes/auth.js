@@ -67,17 +67,7 @@ router.post('/register', async (req, res) => {
       const emailSent = await sendOTPEmail(email, name, otp);
 
       if (!emailSent) {
-        // If email fails, still allow registration but log the error
-        console.error('⚠️ Email sending failed, but user was created. OTP:', otp);
-        // Auto-verify user if email fails
-        newUser.isVerified = true;
-        newUser.otp = null;
-        newUser.otpExpiry = null;
-        await newUser.save();
-        return res.status(201).json({ 
-          message: 'Registration successful! Email service unavailable - your account has been auto-verified. You can now login.',
-          skipOTP: true
-        });
+        return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
       }
 
       res.status(201).json({ 

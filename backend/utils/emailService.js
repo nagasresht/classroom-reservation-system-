@@ -2,11 +2,18 @@ const nodemailer = require('nodemailer');
 
 // Create transporter with your email credentials
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // You can use other services like outlook, yahoo, etc.
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use TLS
   auth: {
-    user: process.env.EMAIL_USER, // Your email address
-    pass: process.env.EMAIL_PASS  // Your app password (not regular password)
-  }
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000
 });
 
 // Verify transporter configuration
