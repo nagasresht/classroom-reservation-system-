@@ -27,6 +27,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Classroom Booking API is running',
+    status: 'OK',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api/calendar', calendarRoutes);
