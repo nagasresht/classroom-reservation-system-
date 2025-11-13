@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import { 
   MdMeetingRoom, 
-  MdScience,
+  MdComputer,
   MdPerson,
   MdAccountCircle,
   MdExitToApp,
@@ -855,7 +855,7 @@ export default function HomePage() {
               }}
             >
               {tab === "Rooms" && <MdMeetingRoom className="text-base sm:text-lg" />}
-              {tab === "Labs" && <MdScience className="text-base sm:text-lg" />}
+              {tab === "Labs" && <MdComputer className="text-base sm:text-lg" />}
               {tab === "Faculty" && <MdSchool className="text-base sm:text-lg" />}
               <span className="hidden sm:inline">{tab}</span>
               <span className="sm:hidden">
