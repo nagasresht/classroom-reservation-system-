@@ -66,13 +66,6 @@ export default function AdminHistory() {
 
   useEffect(() => {
     fetchHistory();
-
-    // Auto-refresh history every 5 seconds for real-time updates
-    const interval = setInterval(() => {
-      fetchHistory();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const handleSearch = (e) => {

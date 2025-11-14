@@ -156,13 +156,6 @@ export default function AdminPanel() {
 
   useEffect(() => {
     fetchBookings();
-
-    // Auto-refresh bookings every 5 seconds for real-time updates
-    const interval = setInterval(() => {
-      fetchBookings();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, [filter]);
 
   const updateStatus = async (id, status, reason = "") => {

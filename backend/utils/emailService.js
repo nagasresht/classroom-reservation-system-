@@ -8,6 +8,12 @@ const generateOTP = () => {
 // Send OTP email using Brevo API (works on Render free tier)
 const sendOTPEmail = async (recipientEmail, recipientName, otp) => {
   console.log(`📧 Attempting to send OTP to: ${recipientEmail}`);
+  console.log(`🔑 BREVO_API_KEY exists: ${process.env.BREVO_API_KEY ? 'Yes' : 'No'}`);
+  
+  if (!process.env.BREVO_API_KEY) {
+    console.error('❌ BREVO_API_KEY not found in environment variables!');
+    return false;
+  }
   
   try {
     const response = await axios.post(

@@ -344,13 +344,6 @@ export default function HomePage() {
   useEffect(() => {
     fetchBookings();
     fetchCalendar();
-
-    // Poll for booking status changes every 5 seconds
-    const interval = setInterval(() => {
-      fetchBookings();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
   // NEW: Fetch availability when date or time slot changes
