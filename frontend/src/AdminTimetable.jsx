@@ -109,9 +109,7 @@ export default function AdminTimetable() {
     "9:00-10:00",
     "10:00-11:00",
     "11:00-12:00",
-    "12:00-12:40", // Lunch break option 1
-    "12:00-1:00", // Lunch break option 2 (overlaps with 12:00-12:40 and 12:40-1:40)
-    "12:40-1:40", // Post-lunch (overlaps with 12:00-1:00)
+    "12:40-1:40", // Post-lunch
     "1:40-2:40",
     "2:40-3:40",
   ];
@@ -119,9 +117,7 @@ export default function AdminTimetable() {
   const seniorYearSlots = [
     "10:00-11:00",
     "11:00-12:00",
-    "12:00-12:40", // Lunch break option 1
-    "12:00-1:00", // Lunch break option 2 (overlaps with 12:00-12:40 and 12:40-1:40)
-    "12:40-1:40", // Post-lunch (overlaps with 12:00-1:00)
+    "12:00-1:00", // Lunch break
     "1:40-2:40",
     "2:40-3:40",
     "3:40-4:40",
