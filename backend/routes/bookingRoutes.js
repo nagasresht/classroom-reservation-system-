@@ -21,8 +21,16 @@ router.post('/book', async (req, res) => {
     console.log('Slots array:', slotsArray);
     console.log('Status from request:', restData.status);
 
+    // Define overlapping slots
+    const overlappingSlots = {
+      "12:00-12:40": ["12:00-1:00"],
+      "12:00-1:00": ["12:00-12:40", "12:40-1:40"],
+      "12:40-1:40": ["12:00-1:00"],
+    };
+
     // Validate all slots are available
     for (const slot of slotsArray) {
+      // Check existing bookings
       const existingApproved = await Booking.findOne({
         room: restData.room,
         date: restData.date,
@@ -49,6 +57,26 @@ router.post('/book', async (req, res) => {
         console.log(`❌ You already have pending request for slot ${slot}`);
         return res.status(400).json({ 
           message: `You already have a pending request for slot ${slot}` 
+        });
+      }
+
+      // Check academic calendar for overlapping slots
+      const dayOfWeek = new Date(restData.date).toLocaleDateString('en-US', { weekday: 'long' });
+      const slotsToCheck = [slot];
+      if (overlappingSlots[slot]) {
+        slotsToCheck.push(...overlappingSlots[slot]);
+      }
+
+      const academicConflict = await AcademicCalendar.findOne({
+        room: restData.room,
+        day: dayOfWeek,
+        slot: { $in: slotsToCheck }
+      });
+
+      if (academicConflict) {
+        console.log(`❌ Academic class conflict for slot ${slot}:`, academicConflict);
+        return res.status(400).json({ 
+          message: `Cannot book ${slot}. Room has an academic class (${academicConflict.subject}) at ${academicConflict.slot} which conflicts with your requested time.` 
         });
       }
     }
@@ -276,6 +304,13 @@ router.patch('/bookings/:id', async (req, res) => {
     });
 
     if (status === 'Approved') {
+      // Define overlapping slots
+      const overlappingSlots = {
+        "12:00-12:40": ["12:00-1:00"],
+        "12:00-1:00": ["12:00-12:40", "12:40-1:40"],
+        "12:40-1:40": ["12:00-1:00"],
+      };
+
       // Check if any of the slots in this booking are already approved
       for (const slot of target.slots) {
         const conflict = await Booking.findOne({
@@ -289,6 +324,26 @@ router.patch('/bookings/:id', async (req, res) => {
         if (conflict) {
           return res.status(400).json({
             message: `Slot ${slot} is already approved for ${conflict.facultyName}`
+          });
+        }
+
+        // Check academic calendar for overlapping slots
+        const dayOfWeek = new Date(target.date).toLocaleDateString('en-US', { weekday: 'long' });
+        const slotsToCheck = [slot];
+        if (overlappingSlots[slot]) {
+          slotsToCheck.push(...overlappingSlots[slot]);
+        }
+
+        const academicConflict = await AcademicCalendar.findOne({
+          room: target.room,
+          day: dayOfWeek,
+          slot: { $in: slotsToCheck }
+        });
+
+        if (academicConflict) {
+          console.log(`❌ Academic class conflict when approving slot ${slot}:`, academicConflict);
+          return res.status(400).json({ 
+            message: `Cannot approve ${slot}. Room has an academic class (${academicConflict.subject}) at ${academicConflict.slot} which conflicts with the requested time.` 
           });
         }
       }
