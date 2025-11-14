@@ -501,7 +501,7 @@ export default function HomePage() {
     return "Pending";
   };
 
-  // Check if a slot is disabled due to overlap with selected slots OR booked overlapping slots
+  // Check if a slot is disabled due to overlap with selected slots OR booked overlapping slots OR academic classes
   const isSlotDisabledByOverlap = (slot) => {
     // Check if any selected slot overlaps with this slot
     const hasSelectedOverlap = selectedSlots.some((selectedSlot) => {
@@ -527,7 +527,25 @@ export default function HomePage() {
       return overlaps.includes(slot) || bookedSlot === slot;
     });
 
-    return hasBookedOverlap;
+    if (hasBookedOverlap) return true;
+
+    // Check if any ACADEMIC CLASS slot overlaps with this slot
+    const dayOfWeek = new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" });
+    const academicClassSlots = academicSlots
+      .filter(
+        (entry) =>
+          entry.room === selectedRoom?.name &&
+          entry.day === dayOfWeek
+      )
+      .map((entry) => entry.slot);
+
+    // For each academic class slot, check if it overlaps with the current slot
+    const hasAcademicOverlap = academicClassSlots.some((academicSlot) => {
+      const overlaps = overlappingSlots[academicSlot] || [];
+      return overlaps.includes(slot) || academicSlot === slot;
+    });
+
+    return hasAcademicOverlap;
   };
 
   // NEW: Toggle slot selection with overlap detection (no alerts, visual only)
