@@ -228,7 +228,7 @@ export default function AdminTimetable() {
           slots: ["9:00-10:00", "10:00-11:00", "11:00-12:00"],
         },
         {
-          label: "Afternoon Lab (1:40 - 3:40)",
+          label: "Afternoon Lab (12:40 - 3:40)",
           value: "afternoon",
           slots: ["12:40-1:40", "1:40-2:40", "2:40-3:40"],
         },
