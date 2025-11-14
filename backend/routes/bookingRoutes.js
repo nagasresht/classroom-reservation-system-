@@ -175,16 +175,32 @@ router.get('/bookings/availability', async (req, res) => {
     // CHECK 3: Find Academic Calendar entries for this day and time slot
     // Academic classes occupy rooms on specific days and slots
     const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Define overlapping slots to check
+    const overlappingSlots = {
+      "12:00-12:40": ["12:00-1:00"],
+      "12:00-1:00": ["12:00-12:40", "12:40-1:40"],
+      "12:40-1:40": ["12:00-1:00"],
+    };
+    
+    // Get slots to check (requested slot + overlapping slots)
+    const slotsToCheck = [time];
+    if (overlappingSlots[time]) {
+      slotsToCheck.push(...overlappingSlots[time]);
+    }
+    
+    console.log(`🔍 Checking academic calendar for slots:`, slotsToCheck);
+    
     const academicEntries = await AcademicCalendar.find({
       day: dayOfWeek,
-      slot: time
+      slot: { $in: slotsToCheck }
     });
 
     // Extract unique room names from academic calendar
     const academicRoomNames = [...new Set(academicEntries.map(entry => entry.room))];
 
-    console.log(`📚 Found ${academicRoomNames.length} rooms with academic classes on ${dayOfWeek} at ${time}:`, academicRoomNames);
-    console.log(`   - Academic entries:`, academicEntries.map(e => ({ room: e.room, subject: e.subject, branch: e.branch, year: e.year, section: e.section })));
+    console.log(`📚 Found ${academicRoomNames.length} rooms with academic classes on ${dayOfWeek} at ${time} (including overlapping):`, academicRoomNames);
+    console.log(`   - Academic entries:`, academicEntries.map(e => ({ room: e.room, subject: e.subject, slot: e.slot, branch: e.branch, year: e.year, section: e.section })));
 
     // Combine both booking and academic calendar rooms (remove duplicates)
     const allBookedRooms = [...new Set([...bookedRoomNames, ...academicRoomNames])];
