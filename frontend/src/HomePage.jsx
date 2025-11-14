@@ -93,8 +93,11 @@ const timeSlots = [
 ];
 
 // Define overlapping slots that cannot be selected together
-// Removed overlapping restrictions to allow independent bookings
-const overlappingSlots = {};
+const overlappingSlots = {
+  "12:00-12:40": ["12:00-1:00"],
+  "12:00-1:00": ["12:00-12:40", "12:40-1:40"],
+  "12:40-1:40": ["12:00-1:00"],
+};
 
 const facultyList = [
   "Dr. Vadlana Baby",
