@@ -3,7 +3,7 @@
 
 // In development, Vite proxy will handle /api requests
 // In production, you can set VITE_API_BASE_URL environment variable
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://test2-7nxj.onrender.com';
 
 export default API_BASE_URL;
 
