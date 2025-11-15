@@ -130,7 +130,7 @@ export default function NotificationBell({ userEmail }) {
 
       {/* Dropdown Panel */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-h-[500px] bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="fixed sm:absolute right-2 sm:right-0 mt-2 w-[calc(100vw-1rem)] sm:w-96 max-h-[500px] bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Header */}
           <div className="p-3 sm:p-4 border-b border-[#374151] bg-[#111827]">
             <div className="flex justify-between items-center">
