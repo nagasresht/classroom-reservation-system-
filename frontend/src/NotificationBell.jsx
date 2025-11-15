@@ -130,18 +130,18 @@ export default function NotificationBell({ userEmail }) {
 
       {/* Dropdown Panel */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-96 max-h-[500px] bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-h-[500px] bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b border-[#374151] bg-[#111827]">
+          <div className="p-3 sm:p-4 border-b border-[#374151] bg-[#111827]">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">Notifications</h3>
+              <h3 className="text-base sm:text-lg font-bold text-white">Notifications</h3>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
                   disabled={loading}
-                  className="text-xs text-[#3B82F6] hover:text-[#60A5FA] transition flex items-center gap-1 disabled:opacity-50"
+                  className="text-xs text-[#3B82F6] hover:text-[#60A5FA] transition flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
                 >
-                  <FaCheckDouble /> Mark all read
+                  <FaCheckDouble /> <span className="hidden sm:inline">Mark all read</span><span className="sm:hidden">Read all</span>
                 </button>
               )}
             </div>
@@ -151,46 +151,46 @@ export default function NotificationBell({ userEmail }) {
           </div>
 
           {/* Notifications List */}
-          <div className="overflow-y-auto max-h-96">
+          <div className="overflow-y-auto max-h-[60vh] sm:max-h-96">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <FaBell className="text-4xl text-[#374151] mx-auto mb-3" />
+              <div className="p-6 sm:p-8 text-center">
+                <FaBell className="text-3xl sm:text-4xl text-[#374151] mx-auto mb-3" />
                 <p className="text-[#9CA3AF] text-sm">No notifications yet</p>
               </div>
             ) : (
               notifications.map((notification) => (
                 <div
                   key={notification._id}
-                  className={`p-4 border-b border-[#374151] hover:bg-[#374151]/30 transition cursor-pointer ${
+                  className={`p-3 sm:p-4 border-b border-[#374151] hover:bg-[#374151]/30 transition cursor-pointer ${
                     !notification.isRead ? 'bg-[#3B82F6]/10' : ''
                   }`}
                   onClick={() => !notification.isRead && markAsRead(notification._id)}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1 flex-shrink-0">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="mt-1 flex-shrink-0 text-sm sm:text-base">
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${!notification.isRead ? 'text-white font-semibold' : 'text-[#9CA3AF]'}`}>
+                      <p className={`text-xs sm:text-sm ${!notification.isRead ? 'text-white font-semibold' : 'text-[#9CA3AF]'}`}>
                         {notification.message}
                       </p>
                       {notification.bookingDetails && (
-                        <div className="mt-2 text-xs text-[#9CA3AF] space-y-1">
-                          <div>📍 Room: {notification.bookingDetails.room}</div>
-                          <div>📅 Date: {notification.bookingDetails.date}</div>
-                          <div>🕐 Time: {notification.bookingDetails.slot}</div>
+                        <div className="mt-2 text-[10px] sm:text-xs text-[#9CA3AF] space-y-1">
+                          <div className="truncate">📍 Room: {notification.bookingDetails.room}</div>
+                          <div className="truncate">📅 Date: {notification.bookingDetails.date}</div>
+                          <div className="truncate">🕐 Time: {notification.bookingDetails.slot}</div>
                         </div>
                       )}
-                      <div className="flex justify-between items-center mt-2">
-                        <p className="text-xs text-[#6B7280]">{formatTime(notification.createdAt)}</p>
+                      <div className="flex justify-between items-center mt-2 gap-2">
+                        <p className="text-[10px] sm:text-xs text-[#6B7280]">{formatTime(notification.createdAt)}</p>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteNotification(notification._id);
                           }}
-                          className="text-xs text-red-400 hover:text-red-300 transition flex items-center gap-1"
+                          className="text-[10px] sm:text-xs text-red-400 hover:text-red-300 transition flex items-center gap-1 flex-shrink-0"
                         >
-                          <FaTrash /> Delete
+                          <FaTrash /> <span className="hidden sm:inline">Delete</span>
                         </button>
                       </div>
                     </div>
